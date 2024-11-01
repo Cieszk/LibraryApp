@@ -13,13 +13,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
-import pl.cieszk.libraryapp.entity.User;
-import pl.cieszk.libraryapp.repository.UserRepository;
-import pl.cieszk.libraryapp.security.JwtUtils;
-import pl.cieszk.libraryapp.service.CustomUserDetailsService;
+import pl.cieszk.libraryapp.auth.controller.AuthController;
+import pl.cieszk.libraryapp.auth.model.User;
+import pl.cieszk.libraryapp.auth.repository.UserRepository;
+import pl.cieszk.libraryapp.auth.service.JwtUtils;
+import pl.cieszk.libraryapp.auth.service.CustomUserDetailsService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
