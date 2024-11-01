@@ -10,5 +10,18 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    image: library-app:1.0.0
+    environment:
+      - SPRING_DATASOURCE_ULR=jdbc:postgres:5432/library_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - JWT_SECRET=h5TQmU1zRCU8abceLt+M8f+qHdWZGFcQ1iB4Olkj7lQz
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
 volumes:
   postgres_data:
