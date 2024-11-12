@@ -1,4 +1,4 @@
-CREATE TABLE user (
+CREATE TABLE "user" (
     user_id BIGSERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(70) UNIQUE NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE publisher (
     name VARCHAR(100) NOT NULL,
     address VARCHAR(255),
     website VARCHAR(100),
-    contact_number VARCHAR(20),
+    contact_number VARCHAR(20)
 );
 
 CREATE TABLE category (
@@ -67,7 +67,7 @@ CREATE TABLE reservation (
     reservation_id BIGSERIAL PRIMARY KEY,
     reservation_date TIMESTAMP NOT NULL,
     due_date TIMESTAMP,
-    user_id BIGINT REFERENCES user(user_id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES "user"(user_id) ON DELETE CASCADE,
     book_instance_id BIGINT UNIQUE REFERENCES book_instance(book_instance_id) ON DELETE CASCADE
 );
 
@@ -78,7 +78,7 @@ CREATE TABLE book_loan (
     due_date TIMESTAMP NOT NULL,
     fine_amount DOUBLE PRECISION,
     renew_count INT DEFAULT 0,
-    user_id BIGINT REFERENCES user(user_id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES "user"(user_id) ON DELETE CASCADE,
     book_instance_id BIGINT REFERENCES book_instance(book_instance_id) ON DELETE CASCADE
 );
 
@@ -87,6 +87,6 @@ create table review(
     rating INT CHECK(rating BETWEEN 1 AND 5),
     comment TEXT,
     review_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    user_id BIGINT REFERENCES user(user_id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES "user"(user_id) ON DELETE CASCADE,
     book_id BIGINT REFERENCES book(book_id) ON DELETE CASCADE
-)
+);

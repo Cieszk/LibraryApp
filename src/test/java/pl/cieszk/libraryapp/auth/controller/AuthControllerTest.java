@@ -2,158 +2,151 @@ package pl.cieszk.libraryapp.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
-import pl.cieszk.libraryapp.auth.controller.AuthController;
+import pl.cieszk.libraryapp.auth.config.JwtAuthenticationFilter;
+import pl.cieszk.libraryapp.auth.dto.LoginUserDto;
+import pl.cieszk.libraryapp.auth.dto.RegisterUserDto;
 import pl.cieszk.libraryapp.auth.model.User;
-import pl.cieszk.libraryapp.auth.repository.UserRepository;
-import pl.cieszk.libraryapp.auth.service.JwtUtils;
-import pl.cieszk.libraryapp.auth.service.CustomUserDetailsService;
+import pl.cieszk.libraryapp.auth.model.enums.UserRole;
+import pl.cieszk.libraryapp.auth.service.AuthService;
+import pl.cieszk.libraryapp.auth.service.JwtService;
+import pl.cieszk.libraryapp.exceptions.AuthenticationFailedException;
+import pl.cieszk.libraryapp.exceptions.GlobalExceptionHandler;
+import pl.cieszk.libraryapp.exceptions.UserAlreadyExistsException;
 
-import static org.mockito.ArgumentMatchers.any;
+import java.util.HashSet;
+
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
-@WebMvcTest(value = AuthController.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class})
-public class AuthControllerTest {
+@WebMvcTest({AuthController.class, GlobalExceptionHandler.class})
+@AutoConfigureMockMvc(addFilters = false)
+class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @MockBean
+    private AuthService authService;
 
     @MockBean
-    private AuthenticationManager authenticationManager;
+    private JwtService jwtService;
 
     @MockBean
-    private UserRepository userRepository;
-
-    @MockBean
-    private PasswordEncoder passwordEncoder;
-
-    @MockBean
-    private JwtUtils jwtUtils;
-
-    @MockBean
-    private CustomUserDetailsService customUserDetailsService;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Test
-    void authenticateUser_ShouldReturnJwtToken() throws Exception {
+    void register_WhenUserAlreadyExists_ShouldReturnConflict() throws Exception {
         // Given
-        User loginRequest = User.builder()
-                .username("testUser")
-                .password("testPassword")
-                .build();
-
-        Authentication authentication = Mockito.mock(Authentication.class);
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(loginRequest);
-        when(jwtUtils.generateJwtToken(any(User.class))).thenReturn("mockJwtToken");
-
-        // When & Then
-        mockMvc.perform(post("/api/auth/login")
-                .with(SecurityMockMvcRequestPostProcessors.csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(content().string("mockJwtToken"));
-    }
-
-    @Test
-    void authenticateUser_ShouldReturnUnauthorizedException() throws Exception {
-        // Given
-        User loginRequest = User.builder()
-                .username("testUser")
-                .password("testPassword")
-                .build();
-
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new AuthenticationException("Invalid credentials") {});
-
-        // When & Then
-        mockMvc.perform(post("/api/auth/login")
-                .with(SecurityMockMvcRequestPostProcessors.csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void registerUser_ShouldReturnSuccessMessage() throws Exception {
-        // Given
-        User singUpRequest = User.builder()
-                .username("testUser")
-                .password("testPassword")
-                .email("test@test.com")
-                .build();
-
-        when(userRepository.existsByUsername(singUpRequest.getUsername())).thenReturn(false);
-        when(userRepository.existsByEmail(singUpRequest.getEmail())).thenReturn(false);
-        when(passwordEncoder.encode(singUpRequest.getPassword())).thenReturn("encodedPassword");
-
-        // When & Then
-        mockMvc.perform(post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(singUpRequest)))
-                .andExpect(status().isOk())
-                .andExpect(content().string("User registered successfully"));
-    }
-
-    @Test
-    void registerUser_ShouldReturnBadRequest_WhenUsernameTaken() throws Exception {
-        // Given
-        User signUpRequest = User.builder()
-                .username("testUsernameTaken")
-                .password("testPassword")
-                .email("test@test.com")
-                .build();
-
-        when(userRepository.existsByUsername(signUpRequest.getUsername())).thenReturn(true);
-        when(userRepository.existsByEmail(signUpRequest.getEmail())).thenReturn(false);
-        when(passwordEncoder.encode(signUpRequest.getPassword())).thenReturn("encodedPassword");
-
-        // When & Then
-        mockMvc.perform(post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(signUpRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("Username or email already taken"));
-    }
-
-    @Test
-    void registerUser_ShouldReturnBadRequest_WhenEmailTaken() throws Exception {
-        // Given
-        User signUpRequest = User.builder()
-                .username("testUsernameTaken")
-                .password("testPassword")
-                .email("test@test.com")
-                .build();
-
-        when(userRepository.existsByUsername(signUpRequest.getUsername())).thenReturn(false);
-        when(userRepository.existsByEmail(signUpRequest.getEmail())).thenReturn(true);
-        when(passwordEncoder.encode(signUpRequest.getPassword())).thenReturn("encodedPassword");
+        RegisterUserDto registerUserDto = new RegisterUserDto();
+        when(authService.signUp(registerUserDto))
+                .thenThrow(new UserAlreadyExistsException("User already exists"));
 
         // When & Then
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(signUpRequest)))
+                        .content(asJsonString(registerUserDto)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("User already exists"));
+    }
+
+    @Test
+    void authenticate_WhenInvalidCredentials_ShouldReturnUnauthorized() throws Exception {
+        // Given
+        LoginUserDto loginUserDto = new LoginUserDto();
+        when(authService.authenticate(loginUserDto))
+                .thenThrow(new AuthenticationFailedException("Invalid credentials"));
+
+        // When & Then
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(loginUserDto)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid credentials"));
+    }
+
+    @Test
+    void register_WhenInvalidData_ShouldReturnBadRequest() throws Exception {
+        // Given
+        RegisterUserDto registerUserDto = new RegisterUserDto();
+        when(authService.signUp(registerUserDto))
+                .thenThrow(new IllegalArgumentException("Invalid registration data"));
+
+        // When & Then
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(registerUserDto)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Username or email already taken"));
+                .andExpect(jsonPath("$.message").value("Invalid registration data"));
+    }
+
+    @Test
+    void register_ShouldReturnRegisteredUser() throws Exception {
+        // Given
+        RegisterUserDto registerUserDto = RegisterUserDto.builder()
+                        .email("test@test.com")
+                        .username("testUser")
+                        .password("testPassword")
+                        .build();
+
+
+        User expectedUser = User.builder()
+                .userId(1L)
+                .email("test@test.com")
+                .username("testUser")
+                .role(UserRole.USER)
+                .isActive(true)
+                .reviews(new HashSet<>())
+                .reservations(new HashSet<>())
+                .bookLoans(new HashSet<>())
+                .build();
+
+        when(authService.signUp(registerUserDto)).thenReturn(expectedUser);
+
+        // When & Then
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(registerUserDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(expectedUser.getUserId()))
+                .andExpect(jsonPath("$.email").value(expectedUser.getEmail()))
+                .andExpect(jsonPath("$.username").value(expectedUser.getUsername()))
+                .andExpect(jsonPath("$.role").value(expectedUser.getRole().name()));
+    }
+
+    @Test
+    void authenticate_ShouldReturnLoginResponse() throws Exception {
+        // Given
+        LoginUserDto loginUserDto = new LoginUserDto();
+        User authenticatedUser = new User();
+        String expectedToken = "jwt-token";
+        long expirationTime = 3600L;
+
+        when(authService.authenticate(loginUserDto)).thenReturn(authenticatedUser);
+        when(jwtService.generateToken(authenticatedUser)).thenReturn(expectedToken);
+        when(jwtService.getExpirationTime()).thenReturn(expirationTime);
+
+        // When & Then
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(loginUserDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value(expectedToken))
+                .andExpect(jsonPath("$.expiresIn").value(expirationTime));
+    }
+
+    private String asJsonString(final Object obj) {
+        try {
+            return new ObjectMapper().writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

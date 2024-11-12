@@ -14,6 +14,7 @@ import pl.cieszk.libraryapp.exceptions.ResourceNotFoundException;
 import pl.cieszk.libraryapp.publishers.model.Publisher;
 import pl.cieszk.libraryapp.publishers.service.PublisherService;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,7 +35,7 @@ public class BookService {
 
     public BookDto getBookById(Long id) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
         return convertToDto(book);
     }
 
@@ -49,7 +50,7 @@ public class BookService {
 
     public BookDto updateBook(Long id, BookDto bookDto) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
 
         book.setTitle(bookDto.getTitle());
         book.setGenre(bookDto.getGenre());
@@ -102,21 +103,21 @@ public class BookService {
                 .pageCount(book.getPageCount())
                 .description(book.getDescription())
                 .publisherId(book.getPublisher() != null ? book.getPublisher().getPublisherId() : null)
-                .authorIds(book.getAuthors().stream().map(Author::getAuthorId).collect(Collectors.toSet()))
-                .categoryIds(book.getCategories().stream().map(Category::getCategoryId).collect(Collectors.toSet()))
+                .authorIds(book.getAuthors() != null ? book.getAuthors().stream().map(Author::getAuthorId).collect(Collectors.toSet()) : Collections.emptySet())
+                .categoryIds(book.getCategories() != null ? book.getCategories().stream().map(Category::getCategoryId).collect(Collectors.toSet()) : Collections.emptySet())
                 .build();
     }
 
     private Set<Author> fetchAuthorsById(Set<Long> authorsIds) {
-        return authorsIds.stream()
+        return authorsIds != null ? authorsIds.stream()
                 .map(authorService::getAuthorEntityById)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()) : Collections.emptySet();
     }
 
     private Set<Category> fetchCategoriesByIds(Set<Long> categories) {
-        return categories.stream()
+        return categories != null ? categories.stream()
                 .map(categoryService::findCategoryEntityById)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toSet()) : Collections.emptySet();
     }
 
     private Publisher fetchPublisherById(Long publisherId) {
