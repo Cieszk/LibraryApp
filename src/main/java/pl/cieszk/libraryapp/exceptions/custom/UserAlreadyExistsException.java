@@ -1,4 +1,4 @@
-package pl.cieszk.libraryapp.exceptions;
+package pl.cieszk.libraryapp.exceptions.custom;
 
 public class UserAlreadyExistsException extends RuntimeException {
     public UserAlreadyExistsException(String message) {

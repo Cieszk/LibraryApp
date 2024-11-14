@@ -1,14 +1,13 @@
 package pl.cieszk.libraryapp.auth.service;
 
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.cieszk.libraryapp.auth.dto.LoginUserDto;
 import pl.cieszk.libraryapp.auth.dto.RegisterUserDto;
 import pl.cieszk.libraryapp.auth.model.User;
 import pl.cieszk.libraryapp.auth.repository.UserRepository;
-import pl.cieszk.libraryapp.exceptions.AuthenticationFailedException;
+import pl.cieszk.libraryapp.exceptions.custom.AuthenticationFailedException;
 
 @Service
 public class AuthService {

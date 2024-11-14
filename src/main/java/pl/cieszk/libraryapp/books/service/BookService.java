@@ -9,8 +9,8 @@ import pl.cieszk.libraryapp.books.model.Book;
 import pl.cieszk.libraryapp.books.repository.BookRepository;
 import pl.cieszk.libraryapp.categories.model.Category;
 import pl.cieszk.libraryapp.categories.service.CategoryService;
-import pl.cieszk.libraryapp.exceptions.ResourceAlreadyExistsException;
-import pl.cieszk.libraryapp.exceptions.ResourceNotFoundException;
+import pl.cieszk.libraryapp.exceptions.custom.ResourceAlreadyExistsException;
+import pl.cieszk.libraryapp.exceptions.custom.ResourceNotFoundException;
 import pl.cieszk.libraryapp.publishers.model.Publisher;
 import pl.cieszk.libraryapp.publishers.service.PublisherService;
 

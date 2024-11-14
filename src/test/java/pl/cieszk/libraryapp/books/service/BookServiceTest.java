@@ -8,8 +8,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.cieszk.libraryapp.books.dto.BookDto;
 import pl.cieszk.libraryapp.books.model.Book;
 import pl.cieszk.libraryapp.books.repository.BookRepository;
-import pl.cieszk.libraryapp.exceptions.ResourceAlreadyExistsException;
-import pl.cieszk.libraryapp.exceptions.ResourceNotFoundException;
+import pl.cieszk.libraryapp.exceptions.custom.ResourceAlreadyExistsException;
+import pl.cieszk.libraryapp.exceptions.custom.ResourceNotFoundException;
 
 import java.util.*;
 

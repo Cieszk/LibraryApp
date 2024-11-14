@@ -1,4 +1,4 @@
-package pl.cieszk.libraryapp.exceptions;
+package pl.cieszk.libraryapp.exceptions.custom;
 
 public class AuthenticationFailedException extends RuntimeException {
     public AuthenticationFailedException(String message) {

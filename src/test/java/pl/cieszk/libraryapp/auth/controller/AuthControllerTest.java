@@ -15,9 +15,9 @@ import pl.cieszk.libraryapp.auth.model.User;
 import pl.cieszk.libraryapp.auth.model.enums.UserRole;
 import pl.cieszk.libraryapp.auth.service.AuthService;
 import pl.cieszk.libraryapp.auth.service.JwtService;
-import pl.cieszk.libraryapp.exceptions.AuthenticationFailedException;
+import pl.cieszk.libraryapp.exceptions.custom.AuthenticationFailedException;
 import pl.cieszk.libraryapp.exceptions.GlobalExceptionHandler;
-import pl.cieszk.libraryapp.exceptions.UserAlreadyExistsException;
+import pl.cieszk.libraryapp.exceptions.custom.UserAlreadyExistsException;
 
 import java.util.HashSet;
 

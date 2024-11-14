@@ -6,15 +6,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import pl.cieszk.libraryapp.auth.dto.LoginUserDto;
 import pl.cieszk.libraryapp.auth.dto.RegisterUserDto;
 import pl.cieszk.libraryapp.auth.model.User;
 import pl.cieszk.libraryapp.auth.repository.UserRepository;
-import pl.cieszk.libraryapp.exceptions.AuthenticationFailedException;
+import pl.cieszk.libraryapp.exceptions.custom.AuthenticationFailedException;
 
 import java.util.Optional;
 
