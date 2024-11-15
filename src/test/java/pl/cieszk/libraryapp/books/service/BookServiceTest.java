@@ -29,11 +29,11 @@ public class BookServiceTest {
         // Given
         List<Book> mockBooks = new ArrayList<>(Arrays.asList(
                 Book.builder()
-                        .book_id(1L)
+                        .bookId(1L)
                         .title("Title1")
                         .build(),
                 Book.builder()
-                        .book_id(2L)
+                        .bookId(2L)
                         .title("Title2")
                         .build()
         ));
@@ -68,7 +68,7 @@ public class BookServiceTest {
         // Given
         Long bookId = 1L;
         Book mockBook = Book.builder()
-                .book_id(bookId)
+                .bookId(bookId)
                 .title("Title")
                 .isbn("ISBN")
                 .build();
@@ -162,7 +162,7 @@ public class BookServiceTest {
                 .build();
 
         Book mockBook = Book.builder()
-                .book_id(bookId)
+                .bookId(bookId)
                 .title("Title")
                 .description("Description")
                 .build();

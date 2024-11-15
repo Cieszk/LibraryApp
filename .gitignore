@@ -144,3 +144,5 @@ replay_pid*
 **/.ssh/id_*
 **/.ssh/*_id_*
 **/.ssh/known_hosts
+
+src/main/resources/application.yml

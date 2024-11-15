@@ -1,26 +1,35 @@
+version: "3.8"
 services:
-  postgres:
-    image: postgres:13
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: library_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
   app:
-    build: .
-    image: library-app:1.0.0
-    environment:
-      - SPRING_DATASOURCE_ULR=jdbc:postgres:5432/library_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      - JWT_SECRET=h5TQmU1zRCU8abceLt+M8f+qHdWZGFcQ1iB4Olkj7lQz
-    depends_on:
-      - postgres
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/library_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    environment:
+        - POSTGRES_DB=library_db
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
 volumes:
-  postgres_data:
+    postgres_data:
+
+networks:
+    app-network:
+      driver: bridge

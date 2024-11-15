@@ -4,7 +4,6 @@ FROM openjdk:17-jdk-alpine
 # Set working directory in container
 WORKDIR /app
 
-# Copy Spring Boot jar file from target directory to the container
 ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} app.jar
 
@@ -12,4 +11,4 @@ COPY ${JAR_FILE} app.jar
 EXPOSE 8080
 
 # Run Spring Boot app
-ENTRYPOINT ["java", "-jar", "app/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

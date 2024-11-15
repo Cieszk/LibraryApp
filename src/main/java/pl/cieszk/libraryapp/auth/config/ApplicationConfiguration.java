@@ -9,7 +9,9 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import pl.cieszk.libraryapp.auth.repository.UserRepository;
+import pl.cieszk.libraryapp.auth.service.JwtService;
 
 @Configuration
 public class ApplicationConfiguration {
@@ -44,4 +46,5 @@ public class ApplicationConfiguration {
 
         return authProvider;
     }
+
 }

@@ -59,10 +59,16 @@ public class BookLoanService {
         if (bookLoan.isPresent()) {
             bookLoan.get().setReturnDate(LocalDateTime.now());
             bookLoanRepository.save(bookLoan.get());
+        } else {
+            throw new IllegalArgumentException("Book is not loaned by this user");
         }
     }
 
     public boolean canUserLoanBook(User user) {
         return bookLoanRepository.findByUser_UserId(user.getUserId()).size() < MAX_LOANS;
+    }
+
+    public boolean hasActiveLoan(Book book, User user) {
+        return bookLoanRepository.findByUserAndBookInstance_Book(user, book).isPresent();
     }
 }

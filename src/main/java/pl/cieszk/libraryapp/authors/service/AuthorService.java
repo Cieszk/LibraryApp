@@ -7,7 +7,6 @@ import pl.cieszk.libraryapp.authors.model.Author;
 import pl.cieszk.libraryapp.authors.repository.AuthorRepository;
 import pl.cieszk.libraryapp.books.model.Book;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,7 +32,7 @@ public class AuthorService {
                 .lastName(author.getLastName())
                 .nationality(author.getNationality())
                 .biography(author.getBiography())
-                .bookIds(author.getBooks().stream().map(Book::getBook_id).collect(Collectors.toSet()))
+                .bookIds(author.getBooks().stream().map(Book::getBookId).collect(Collectors.toSet()))
                 .build();
     }
 }

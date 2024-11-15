@@ -94,7 +94,7 @@ public class BookService {
 
     private BookDto convertToDto(Book book) {
         return BookDto.builder()
-                .id(book.getBook_id())
+                .id(book.getBookId())
                 .title(book.getTitle())
                 .genre(book.getGenre())
                 .publishYear(book.getPublishYear())
