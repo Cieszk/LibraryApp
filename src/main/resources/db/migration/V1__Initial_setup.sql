@@ -66,6 +66,7 @@ CREATE TABLE book_instance (
 CREATE TABLE reservation (
     reservation_id BIGSERIAL PRIMARY KEY,
     reservation_date TIMESTAMP NOT NULL,
+    return_date TIMESTAMP,
     due_date TIMESTAMP,
     user_id BIGINT REFERENCES "user"(user_id) ON DELETE CASCADE,
     book_instance_id BIGINT UNIQUE REFERENCES book_instance(book_instance_id) ON DELETE CASCADE

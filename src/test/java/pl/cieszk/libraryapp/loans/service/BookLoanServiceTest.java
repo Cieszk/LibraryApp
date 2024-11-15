@@ -13,6 +13,7 @@ import pl.cieszk.libraryapp.books.service.BookInstanceService;
 import pl.cieszk.libraryapp.exceptions.custom.BookNotAvailableException;
 import pl.cieszk.libraryapp.loans.model.BookLoan;
 import pl.cieszk.libraryapp.loans.repository.BookLoanRepository;
+import pl.cieszk.libraryapp.loans.repository.BookLoanRepositoryTest;
 import pl.cieszk.libraryapp.reservations.model.Reservation;
 import pl.cieszk.libraryapp.reservations.repository.ReservationRepository;
 import pl.cieszk.libraryapp.reservations.service.ReservationService;

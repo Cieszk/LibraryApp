@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
+@Table(name = "\"user\"")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -27,6 +28,7 @@ public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long userId;
 
     @Column(unique = true, nullable = false, length = 50)
@@ -41,7 +43,7 @@ public class User implements UserDetails {
     private boolean isActive = true;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, name = "roles")
     private UserRole role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
