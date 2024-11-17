@@ -21,6 +21,8 @@ import pl.cieszk.libraryapp.auth.service.JwtService;
 import pl.cieszk.libraryapp.books.dto.BookDto;
 import pl.cieszk.libraryapp.books.service.BookService;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -162,5 +164,20 @@ class BookControllerTest {
                 .andExpect(status().isForbidden());
 
         verify(bookService, never()).deleteBook(any());
+    }
+
+    @Test
+    @WithMockUser(roles = {"ADMIN", "USER"})
+    void getAllBooks_WithAdminOrUserRole_ShouldReturnAllBooks() throws Exception {
+        // Given
+        when(bookService.getAllBooks()).thenReturn(List.of(bookDto));
+
+        // When & Then
+        mockMvc.perform(get("/api/books"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].title").value("Test Book"));
+
+        verify(bookService).getAllBooks();
     }
 }

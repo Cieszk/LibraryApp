@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import pl.cieszk.libraryapp.books.dto.BookDto;
 import pl.cieszk.libraryapp.books.service.BookService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
@@ -37,5 +39,13 @@ public class BookController {
         System.out.println("User roles: " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
         bookService.deleteBook(id);
         return ResponseEntity.ok("Book deleted successfully.");
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @GetMapping
+    public ResponseEntity<List<BookDto>> getAllBooks(@RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "10") int size) {
+        List<BookDto> books = bookService.getAllBooks();
+        return ResponseEntity.ok(books);
     }
 }
