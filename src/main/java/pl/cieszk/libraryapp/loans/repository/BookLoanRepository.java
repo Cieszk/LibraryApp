@@ -17,4 +17,6 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, Long> {
 
     Optional<BookLoan> findByUserAndBookInstance_Book(User user, Book book);
 
+    List<BookLoan> findByUser_UserIdAndReturnDateIsNotNull(Long userId);
+
 }

@@ -13,7 +13,10 @@ import pl.cieszk.libraryapp.reservations.model.Reservation;
 import pl.cieszk.libraryapp.reservations.service.ReservationService;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -70,5 +73,35 @@ public class BookLoanService {
 
     public boolean hasActiveLoan(Book book, User user) {
         return bookLoanRepository.findByUserAndBookInstance_Book(user, book).isPresent();
+    }
+
+    public BookLoan renewLoan(Book book, User user) {
+        Optional<BookLoan> bookLoan = bookLoanRepository.findByUserAndBookInstance_Book(user, book);
+        if (bookLoan.isPresent()) {
+            if (bookLoan.get().getRenewCount() < 2) {
+                bookLoan.get().setRenewCount(bookLoan.get().getRenewCount() + 1);
+                bookLoan.get().setDueDate(bookLoan.get().getDueDate().plusWeeks(2));
+                bookLoanRepository.save(bookLoan.get());
+            } else {
+                throw new IllegalArgumentException("Book cannot be renewed more than twice");
+            }
+        } else {
+            throw new IllegalArgumentException("Book is not loaned by this user");
+        }
+        return bookLoan.get();
+    }
+
+    public List<BookLoan> getCurrentUserLoans(Long userId) {
+        return bookLoanRepository.findByUser_UserId(userId);
+    }
+
+    public List<BookLoan> getLoanHistory(Long userId) {
+        return bookLoanRepository.findByUser_UserIdAndReturnDateIsNotNull(userId);
+    }
+
+    public Map<BookInstance, Double> getUserFines(Long userId) {
+        return bookLoanRepository.findByUser_UserId(userId).stream()
+                .filter(bookLoan -> bookLoan.getFineAmount() > 0)
+                .collect(Collectors.groupingBy(BookLoan::getBookInstance, Collectors.summingDouble(BookLoan::getFineAmount)));
     }
 }
