@@ -72,6 +72,12 @@ public class BookLoanServiceTest {
                 .user(user)
                 .build();
 
+        Reservation reservation = Reservation.builder()
+                .reservationId(1L)
+                .bookInstance(bookInstance)
+                .user(user)
+                .build();
+
         when(bookLoanRepository.save(any(BookLoan.class))).thenReturn(savedBookLoan);
         when(reservationService.findReservationByUserAndBook(user, book)).thenThrow(new NoReservationFoundException("No reservation found for user and book"));
         when(bookInstanceService.getAnyAvailable(book)).thenReturn(bookInstance);
@@ -81,7 +87,7 @@ public class BookLoanServiceTest {
 
         // Then
         verify(bookLoanRepository, times(1)).save(any(BookLoan.class));
-        verify(reservationService, never()).deleteReservation(any(Reservation.class).getReservationId());
+        verify(reservationService, never()).deleteReservation(reservation.getReservationId());
         assertEquals(savedBookLoan.getBookLoanId(), bookLoanService.createLoan(book, user).getBookLoanId());
     }
 
@@ -102,6 +108,7 @@ public class BookLoanServiceTest {
                 .build();
 
         Reservation reservation = Reservation.builder()
+                .reservationId(1L)
                 .bookInstance(bookInstance)
                 .user(user)
                 .build();
@@ -121,7 +128,7 @@ public class BookLoanServiceTest {
 
         // Then
         verify(bookLoanRepository, times(1)).save(any(BookLoan.class));
-        verify(reservationService, times(1)).deleteReservation(any(Reservation.class).getReservationId());
+        verify(reservationService, times(1)).deleteReservation(reservation.getReservationId());
         assertEquals(savedBookLoan.getBookLoanId(), bookLoanService.createLoan(book, user).getBookLoanId());
     }
 
@@ -149,7 +156,7 @@ public class BookLoanServiceTest {
 
         verify(bookInstanceService, times(1)).getAnyAvailable(book);
         verify(bookLoanRepository, never()).save(any(BookLoan.class));
-        verify(reservationService, never()).deleteReservation(any(Reservation.class).getReservationId());
+        verify(reservationService, never()).deleteReservation(reservation.getReservationId());
 
     }
 

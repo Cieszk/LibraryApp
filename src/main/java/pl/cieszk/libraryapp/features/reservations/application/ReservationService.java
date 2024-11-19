@@ -43,8 +43,12 @@ public class ReservationService {
         throw new NoReservationFoundException("No reservation found for user and book");
     }
 
-    public void deleteReservation(Long idReservation) {
-        reservationRepository.deleteById(idReservation);
+    public void deleteReservation(Long idReservation) throws NoReservationFoundException {
+        if (reservationRepository.existsById(idReservation)) {
+            reservationRepository.deleteById(idReservation);
+            return;
+        }
+        throw new NoReservationFoundException("No reservation found with given ID");
     }
 
     public Reservation extendReservation(Long idReservation) throws NoReservationFoundException {
@@ -58,8 +62,8 @@ public class ReservationService {
     }
 
     private boolean canUserReserveBook(User user) {
-        Optional<Reservation> reservation = reservationRepository.findByUser_UserId(user.getUserId());
-        return reservation.isEmpty() || reservation.get().getUser().getReservations().size() < MAX_RESERVATIONS;
+        Long reservationCount = reservationRepository.countByUser_UserId(user.getUserId());
+        return reservationCount < MAX_RESERVATIONS;
     }
 
     public int getMAX_RESERVATIONS() {
