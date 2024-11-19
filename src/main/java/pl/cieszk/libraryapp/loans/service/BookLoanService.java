@@ -57,11 +57,11 @@ public class BookLoanService {
         }
     }
 
-    public void returnBook(Book book, User user) {
+    public BookLoan returnBook(Book book, User user) {
         Optional<BookLoan> bookLoan = bookLoanRepository.findByUserAndBookInstance_Book(user, book);
         if (bookLoan.isPresent()) {
             bookLoan.get().setReturnDate(LocalDateTime.now());
-            bookLoanRepository.save(bookLoan.get());
+            return bookLoanRepository.save(bookLoan.get());
         } else {
             throw new IllegalArgumentException("Book is not loaned by this user");
         }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import pl.cieszk.libraryapp.exceptions.custom.*;
 
 @ControllerAdvice
@@ -63,7 +64,12 @@ public class GlobalExceptionHandler implements HandlerExceptionResolver {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return new ModelAndView();
         }
+        else if (ex instanceof AuthenticationCredentialsNotFoundException) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return new ModelAndView();
+        }
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        response.setHeader("Error", ex.getMessage());
         return new ModelAndView();
     }
 }

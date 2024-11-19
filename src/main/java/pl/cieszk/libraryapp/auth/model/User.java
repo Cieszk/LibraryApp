@@ -1,5 +1,6 @@
 package pl.cieszk.libraryapp.auth.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -56,6 +57,7 @@ public class User implements UserDetails {
     private Set<BookLoan> bookLoans;
 
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(role);
     }
