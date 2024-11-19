@@ -2,6 +2,7 @@ package pl.cieszk.libraryapp.features.loans.application;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
@@ -27,34 +28,23 @@ public class BookLoanService {
 
     private final int MAX_LOANS = 5;
 
-    public BookLoan createLoan(Book book, User user) throws BookNotAvailableException {
-        Optional<Reservation> reservation = reservationService.findReservationByUserAndBook(user, book);
-        if (reservation.isPresent()) {
-            BookLoan bookLoan = BookLoan.builder()
-                    .bookInstance(reservation.get().getBookInstance())
-                    .user(user)
-                    .loanDate(LocalDateTime.now())
-                    .dueDate(LocalDateTime.now().plusWeeks(2))
-                    .build();
-            bookLoanRepository.save(bookLoan);
-            reservationService.deleteReservation(reservation.get());
-            return bookLoan;
-
-        } else {
-            Optional<BookInstance> availableBookInstance = bookInstanceService.getAnyAvailable(book);
-            if (availableBookInstance.isPresent()) {
-                BookLoan bookLoan = BookLoan.builder()
-                        .bookInstance(availableBookInstance.get())
-                        .user(user)
-                        .loanDate(LocalDateTime.now())
-                        .dueDate(LocalDateTime.now().plusWeeks(2))
-                        .build();
-                bookLoanRepository.save(bookLoan);
-                return bookLoan;
-            } else {
-                throw new BookNotAvailableException("Book is not available for loan");
-            }
+    public BookLoan createLoan(Book book, User user) throws BookNotAvailableException, NoReservationFoundException {
+        BookInstance bookInstance;
+        try {
+            Reservation reservation = reservationService.findReservationByUserAndBook(user, book);
+            bookInstance = reservation.getBookInstance();
+            reservationService.deleteReservation(reservation.getReservationId());
+        } catch (NoReservationFoundException e) {
+            bookInstance = bookInstanceService.getAnyAvailable(book);
         }
+        BookLoan bookLoan = BookLoan.builder()
+                .bookInstance(bookInstance)
+                .user(user)
+                .loanDate(LocalDateTime.now())
+                .dueDate(LocalDateTime.now().plusWeeks(2))
+                .build();
+        bookLoanRepository.save(bookLoan);
+        return bookLoan;
     }
 
     public BookLoan returnBook(Book book, User user) {

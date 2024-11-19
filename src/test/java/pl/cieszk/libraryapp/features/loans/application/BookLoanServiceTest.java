@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
@@ -23,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.Optional.empty;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -50,7 +52,7 @@ public class BookLoanServiceTest {
 
 
     @Test
-    void createLoan_ShouldReturnCreatedBookLoanWhenBookIsNotReserved() throws BookNotAvailableException {
+    void createLoan_ShouldReturnCreatedBookLoanWhenBookIsNotReserved() throws BookNotAvailableException, NoReservationFoundException {
         // Given
         Book book = Book.builder()
                 .bookId(1L)
@@ -71,20 +73,20 @@ public class BookLoanServiceTest {
                 .build();
 
         when(bookLoanRepository.save(any(BookLoan.class))).thenReturn(savedBookLoan);
-        when(reservationService.findReservationByUserAndBook(user, book)).thenReturn(Optional.empty());
-        when(bookInstanceService.getAnyAvailable(book)).thenReturn(Optional.of(bookInstance));
+        when(reservationService.findReservationByUserAndBook(user, book)).thenThrow(new NoReservationFoundException("No reservation found for user and book"));
+        when(bookInstanceService.getAnyAvailable(book)).thenReturn(bookInstance);
 
         // When
         bookLoanService.createLoan(book, user);
 
         // Then
         verify(bookLoanRepository, times(1)).save(any(BookLoan.class));
-        verify(reservationService, never()).deleteReservation(any(Reservation.class));
+        verify(reservationService, never()).deleteReservation(any(Reservation.class).getReservationId());
         assertEquals(savedBookLoan.getBookLoanId(), bookLoanService.createLoan(book, user).getBookLoanId());
     }
 
     @Test
-    void createLoan_ShouldReturnCreatedBookLoanWhenBookIsReserved() throws BookNotAvailableException {
+    void createLoan_ShouldReturnCreatedBookLoanWhenBookIsReserved() throws BookNotAvailableException, NoReservationFoundException {
         // Given
         Book book = Book.builder()
                 .bookId(1L)
@@ -112,19 +114,19 @@ public class BookLoanServiceTest {
                 .build();
 
         when(bookLoanRepository.save(any(BookLoan.class))).thenReturn(savedBookLoan);
-        when(reservationService.findReservationByUserAndBook(user, book)).thenReturn(Optional.of(reservation));
+        when(reservationService.findReservationByUserAndBook(user, book)).thenReturn(reservation);
 
         // When
         bookLoanService.createLoan(book, user);
 
         // Then
         verify(bookLoanRepository, times(1)).save(any(BookLoan.class));
-        verify(reservationService, times(1)).deleteReservation(any(Reservation.class));
+        verify(reservationService, times(1)).deleteReservation(any(Reservation.class).getReservationId());
         assertEquals(savedBookLoan.getBookLoanId(), bookLoanService.createLoan(book, user).getBookLoanId());
     }
 
     @Test
-    void createLoan_ShouldThrowBookNotAvailableExceptionWhenBookIsNotAvailable() {
+    void createLoan_ShouldThrowBookNotAvailableExceptionWhenBookIsNotAvailable() throws NoReservationFoundException, BookNotAvailableException {
         // Given
         Book book = Book.builder()
                 .bookId(1L)
@@ -134,15 +136,20 @@ public class BookLoanServiceTest {
                 .userId(1L)
                 .build();
 
-        when(reservationService.findReservationByUserAndBook(user, book)).thenReturn(Optional.empty());
-        when(bookInstanceService.getAnyAvailable(book)).thenReturn(Optional.empty());
+        Reservation reservation = Reservation.builder()
+                .bookInstance(BookInstance.builder().bookInstanceId(1L).book(book).build())
+                .user(user)
+                .build();
+
+        when(reservationService.findReservationByUserAndBook(user, book)).thenThrow(new NoReservationFoundException("No reservation found for user and book"));
+        when(bookInstanceService.getAnyAvailable(book)).thenThrow(new BookNotAvailableException("Book is not available"));
 
         // When & Then
         assertThrows(BookNotAvailableException.class, () -> bookLoanService.createLoan(book, user));
 
         verify(bookInstanceService, times(1)).getAnyAvailable(book);
         verify(bookLoanRepository, never()).save(any(BookLoan.class));
-        verify(reservationService, never()).deleteReservation(any(Reservation.class));
+        verify(reservationService, never()).deleteReservation(any(Reservation.class).getReservationId());
 
     }
 
@@ -190,7 +197,7 @@ public class BookLoanServiceTest {
                 .userId(1L)
                 .build();
 
-        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(Optional.empty());
+        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(empty());
 
         // When & Then
         assertThrows(IllegalArgumentException.class, () -> bookLoanService.returnBook(book, user));
@@ -273,7 +280,7 @@ public class BookLoanServiceTest {
                 .userId(1L)
                 .build();
 
-        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(Optional.empty());
+        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(empty());
 
         // When
         boolean result = bookLoanService.hasActiveLoan(book, user);
@@ -328,7 +335,7 @@ public class BookLoanServiceTest {
                 .userId(1L)
                 .build();
 
-        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(Optional.empty());
+        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(empty());
 
         // When & Then
         assertThrows(IllegalArgumentException.class, () -> bookLoanService.renewLoan(book, user));

@@ -1,4 +1,4 @@
-package pl.cieszk.libraryapp.features.loans.application.dto;
+package pl.cieszk.libraryapp.shared.dto;
 
 import lombok.Data;
 import pl.cieszk.libraryapp.features.auth.domain.User;

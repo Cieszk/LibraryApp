@@ -12,9 +12,8 @@ import pl.cieszk.libraryapp.features.books.application.BookInstanceService;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.any;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,10 +33,10 @@ public class BookInstanceServiceTest {
         when(bookInstanceRepository.findFirstAvailableByBook(bookInstance.getBook())).thenReturn(Optional.of(bookInstance));
 
         // When
-        Optional<BookInstance> result = bookInstanceService.getAnyAvailable(bookInstance.getBook());
+        BookInstance result = bookInstanceService.getAnyAvailable(bookInstance.getBook());
 
         // Then
-        assertTrue(result.isPresent());
+        assertEquals(result.getBookInstanceId(), bookInstance.getBookInstanceId());
     }
 
     @Test

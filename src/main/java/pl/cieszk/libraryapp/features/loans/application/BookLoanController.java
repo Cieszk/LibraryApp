@@ -1,13 +1,15 @@
 package pl.cieszk.libraryapp.features.loans.application;
 
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
 import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
-import pl.cieszk.libraryapp.features.loans.application.dto.BookUserRequest;
+import pl.cieszk.libraryapp.shared.dto.BookUserRequest;
 import pl.cieszk.libraryapp.features.loans.domain.BookLoan;
 
 import java.util.List;
@@ -17,13 +19,10 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/loans")
 @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+@AllArgsConstructor
 public class BookLoanController {
 
     private final BookLoanService bookLoanService;
-
-    public BookLoanController(BookLoanService bookLoanService) {
-        this.bookLoanService = bookLoanService;
-    }
 
     @GetMapping("/current")
     public ResponseEntity<List<BookLoan>> getCurrentUserLoans(@RequestBody User user) {
@@ -46,7 +45,7 @@ public class BookLoanController {
     }
 
     @PostMapping
-    public ResponseEntity<BookLoan> createLoan(@RequestBody BookUserRequest bookUserRequest) throws BookNotAvailableException {
+    public ResponseEntity<BookLoan> createLoan(@RequestBody BookUserRequest bookUserRequest) throws BookNotAvailableException, NoReservationFoundException {
         Book book = bookUserRequest.getBook();
         User user = bookUserRequest.getUser();
         return ResponseEntity.ok(bookLoanService.createLoan(book, user));

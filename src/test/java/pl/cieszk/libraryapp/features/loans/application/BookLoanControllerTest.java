@@ -24,10 +24,8 @@ import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
 import pl.cieszk.libraryapp.features.books.application.BookService;
 import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
-import pl.cieszk.libraryapp.features.loans.application.BookLoanController;
-import pl.cieszk.libraryapp.features.loans.application.dto.BookUserRequest;
+import pl.cieszk.libraryapp.shared.dto.BookUserRequest;
 import pl.cieszk.libraryapp.features.loans.domain.BookLoan;
-import pl.cieszk.libraryapp.features.loans.application.BookLoanService;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
