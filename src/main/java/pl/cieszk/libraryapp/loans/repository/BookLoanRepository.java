@@ -6,6 +6,7 @@ import pl.cieszk.libraryapp.books.model.Book;
 import pl.cieszk.libraryapp.books.model.BookInstance;
 import pl.cieszk.libraryapp.loans.model.BookLoan;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,5 +19,7 @@ public interface BookLoanRepository extends JpaRepository<BookLoan, Long> {
     Optional<BookLoan> findByUserAndBookInstance_Book(User user, Book book);
 
     List<BookLoan> findByUser_UserIdAndReturnDateIsNotNull(Long userId);
+
+    List<BookLoan> findByReturnDateIsNullAndDueDateBefore(LocalDate now);
 
 }
