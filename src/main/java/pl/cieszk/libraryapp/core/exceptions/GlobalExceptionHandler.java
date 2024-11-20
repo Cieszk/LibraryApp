@@ -13,6 +13,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import pl.cieszk.libraryapp.core.exceptions.custom.*;
+import pl.cieszk.libraryapp.features.publishers.domain.Publisher;
 
 @ControllerAdvice
 @Component
@@ -65,6 +66,13 @@ public class GlobalExceptionHandler implements HandlerExceptionResolver {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(PublisherNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<ErrorResponse> handlePublisherNotFoundException(PublisherNotFoundException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
     @Override
     public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
         if (ex instanceof AuthorizationDeniedException) {
@@ -73,6 +81,11 @@ public class GlobalExceptionHandler implements HandlerExceptionResolver {
         }
         else if (ex instanceof AuthenticationCredentialsNotFoundException) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return new ModelAndView();
+        }
+        else if (ex instanceof PublisherNotFoundException) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.setHeader("Error", ex.getMessage());
             return new ModelAndView();
         }
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
