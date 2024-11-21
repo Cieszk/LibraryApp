@@ -1,4 +1,4 @@
-package pl.cieszk.libraryapp.features.auth.application;
+package pl.cieszk.libraryapp.features.auth.application.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -9,6 +9,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import pl.cieszk.libraryapp.core.config.JwtAuthenticationFilter;
+import pl.cieszk.libraryapp.features.auth.application.dto.LoginUserDto;
+import pl.cieszk.libraryapp.features.auth.application.dto.RegisterUserDto;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.auth.domain.enums.UserRole;
 import pl.cieszk.libraryapp.core.exceptions.custom.AuthenticationFailedException;

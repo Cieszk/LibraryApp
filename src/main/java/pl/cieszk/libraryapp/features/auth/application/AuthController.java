@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.cieszk.libraryapp.core.config.LoginResponse;
+import pl.cieszk.libraryapp.features.auth.application.dto.LoginUserDto;
+import pl.cieszk.libraryapp.features.auth.application.dto.RegisterUserDto;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 
 @RestController

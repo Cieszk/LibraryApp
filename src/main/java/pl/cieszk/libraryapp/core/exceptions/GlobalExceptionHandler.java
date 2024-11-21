@@ -73,6 +73,13 @@ public class GlobalExceptionHandler implements HandlerExceptionResolver {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
     @Override
     public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
         if (ex instanceof AuthorizationDeniedException) {
@@ -85,6 +92,11 @@ public class GlobalExceptionHandler implements HandlerExceptionResolver {
         }
         else if (ex instanceof PublisherNotFoundException) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.setHeader("Error", ex.getMessage());
+            return new ModelAndView();
+        }
+        else if (ex instanceof UnauthorizedAccessException) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setHeader("Error", ex.getMessage());
             return new ModelAndView();
         }
