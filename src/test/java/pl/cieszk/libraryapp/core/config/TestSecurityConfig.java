@@ -12,7 +12,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import pl.cieszk.libraryapp.features.auth.application.JwtService;
-import pl.cieszk.libraryapp.core.config.JwtAuthenticationFilter;
 
 @TestConfiguration
 @EnableMethodSecurity(prePostEnabled = true)

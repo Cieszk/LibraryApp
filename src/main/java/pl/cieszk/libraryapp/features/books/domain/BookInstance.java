@@ -5,9 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import pl.cieszk.libraryapp.features.books.domain.enums.BookStatus;
 import pl.cieszk.libraryapp.features.loans.domain.BookLoan;
 import pl.cieszk.libraryapp.features.reservations.domain.Reservation;
-import pl.cieszk.libraryapp.features.books.domain.enums.BookStatus;
 
 import java.util.Set;
 

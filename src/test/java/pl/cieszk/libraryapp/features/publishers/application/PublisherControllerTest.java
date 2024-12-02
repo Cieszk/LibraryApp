@@ -19,6 +19,8 @@ import pl.cieszk.libraryapp.core.config.JwtAuthenticationFilter;
 import pl.cieszk.libraryapp.core.config.SecurityConfiguration;
 import pl.cieszk.libraryapp.core.exceptions.custom.PublisherNotFoundException;
 import pl.cieszk.libraryapp.features.auth.application.JwtService;
+import pl.cieszk.libraryapp.features.publishers.application.dto.PublisherRequestDto;
+import pl.cieszk.libraryapp.features.publishers.application.dto.PublisherResponseDto;
 import pl.cieszk.libraryapp.features.publishers.domain.Publisher;
 
 import java.util.List;
@@ -65,12 +67,12 @@ public class PublisherControllerTest {
 
     private String token;
 
-    private Publisher publisher;
+    private PublisherResponseDto publisherDto;
 
     @BeforeEach
     void setUp() {
-        publisher = Publisher.builder()
-                .publisherId(1L)
+        publisherDto = PublisherResponseDto.builder()
+                .name("Publisher")
                 .build();
 
         // Mock the JwtService to return a valid token
@@ -88,13 +90,13 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "ADMIN")
     void getAllPublishers_ShouldReturnListOfPublishers() throws Exception {
         // Given
-        when(publisherService.getAllPublishers()).thenReturn(List.of(publisher));
+        when(publisherService.getAllPublishers()).thenReturn(List.of(publisherDto));
 
         // When & Then
         mockMvc.perform(get("/api/publishers")
                 .header("Authorization", token))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].publisherId").value(1));
+            .andExpect(jsonPath("$[0].name").value("Publisher"));
     }
 
     @Test
@@ -117,13 +119,13 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "ADMIN")
     void getPublisherById_ShouldReturnPublisher() throws Exception {
         // Given
-        when(publisherService.getPublisherEntityById(1L)).thenReturn(publisher);
+        when(publisherService.getPublisherById(1L)).thenReturn(publisherDto);
 
         // When & Then
         mockMvc.perform(get("/api/publishers/1")
                 .header("Authorization", token))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.publisherId").value(1));
+            .andExpect(jsonPath("$.name").value("Publisher"));
     }
 
     @Test
@@ -137,7 +139,7 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "ADMIN")
     void getPublisherById_ShouldReturnNotFoundWhenPublisherNotFound() throws Exception {
         // Given
-        when(publisherService.getPublisherEntityById(1L)).thenThrow(new PublisherNotFoundException("Publisher not found"));
+        when(publisherService.getPublisherById(1L)).thenThrow(new PublisherNotFoundException("Publisher not found"));
 
         // When & Then
         mockMvc.perform(get("/api/publishers/1")
@@ -158,15 +160,15 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "ADMIN")
     void addPublisher_ShouldReturnPublisher() throws Exception {
         // Given
-        when(publisherService.addPublisher(any(Publisher.class))).thenReturn(publisher);
+        when(publisherService.addPublisher(any(PublisherRequestDto.class))).thenReturn(publisherDto);
 
         // When & Then
         mockMvc.perform(post("/api/publishers")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(publisher))
+                .content(objectMapper.writeValueAsString(publisherDto))
                 .header("Authorization", token))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.publisherId").value(1));
+            .andExpect(jsonPath("$.name").value("Publisher"));
     }
 
     @Test
@@ -174,7 +176,7 @@ public class PublisherControllerTest {
         // When & Then
         mockMvc.perform(post("/api/publishers")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(publisher)))
+                .content(objectMapper.writeValueAsString(publisherDto)))
             .andExpect(status().isForbidden());
     }
 
@@ -184,7 +186,7 @@ public class PublisherControllerTest {
         // When & Then
         mockMvc.perform(post("/api/publishers")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(publisher))
+                .content(objectMapper.writeValueAsString(publisherDto))
                 .header("Authorization", token))
             .andExpect(status().isForbidden());
     }
@@ -193,16 +195,16 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "ADMIN")
     void updatePublisher_ShouldReturnPublisher() throws Exception {
         // Given
-        when(publisherService.updatePublisher(any(Publisher.class))).thenReturn(publisher);
+        when(publisherService.updatePublisher(any(PublisherRequestDto.class))).thenReturn(publisherDto);
 
         // When & Then
         mockMvc.perform(put("/api/publishers")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(publisher))
+                .content(objectMapper.writeValueAsString(publisherDto))
                 .header("Authorization", token))
                 .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.publisherId").value(1));
+            .andExpect(jsonPath("$.name").value("Publisher"));
     }
 
     @Test
@@ -210,7 +212,7 @@ public class PublisherControllerTest {
         // When & Then
         mockMvc.perform(put("/api/publishers")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(publisher)))
+                .content(objectMapper.writeValueAsString(publisherDto)))
             .andExpect(status().isForbidden());
     }
 
@@ -220,7 +222,7 @@ public class PublisherControllerTest {
         // When & Then
         mockMvc.perform(put("/api/publishers")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(publisher))
+                .content(objectMapper.writeValueAsString(publisherDto))
                 .header("Authorization", token))
             .andExpect(status().isForbidden());
     }
@@ -229,12 +231,12 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "ADMIN")
     void updatePublisher_ShouldReturnNotFoundWhenPublisherNotFound() throws Exception {
         // Given
-        when(publisherService.updatePublisher(any(Publisher.class))).thenThrow(new PublisherNotFoundException("Publisher not found"));
+        when(publisherService.updatePublisher(any(PublisherRequestDto.class))).thenThrow(new PublisherNotFoundException("Publisher not found"));
 
         // When & Then
         mockMvc.perform(put("/api/publishers")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(publisher))
+                .content(objectMapper.writeValueAsString(publisherDto))
                 .header("Authorization", token))
             .andExpect(status().isNotFound());
     }

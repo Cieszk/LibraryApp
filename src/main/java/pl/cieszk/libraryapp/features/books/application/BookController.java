@@ -5,7 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import pl.cieszk.libraryapp.features.books.application.dto.BookDto;
+import pl.cieszk.libraryapp.features.books.application.dto.BookRequestDto;
+import pl.cieszk.libraryapp.features.books.application.dto.BookResponseDto;
 
 import java.util.List;
 
@@ -20,15 +21,15 @@ public class BookController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<BookDto> addBook(@RequestBody BookDto bookDto) {
-        BookDto createdBook = bookService.createBook(bookDto);
+    public ResponseEntity<BookResponseDto> addBook(@RequestBody BookRequestDto bookRequestDto) {
+        BookResponseDto createdBook = bookService.createBook(bookRequestDto);
         return new ResponseEntity<>(createdBook, HttpStatus.CREATED);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<BookDto> updateBook(@RequestBody BookDto bookDto, @PathVariable Long id) {
-        BookDto updatedBook = bookService.updateBook(id, bookDto);
+    public ResponseEntity<BookResponseDto> updateBook(@RequestBody BookRequestDto bookRequestDto, @PathVariable Long id) {
+        BookResponseDto updatedBook = bookService.updateBook(id, bookRequestDto);
         return ResponseEntity.ok(updatedBook);
     }
 
@@ -42,9 +43,9 @@ public class BookController {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping
-    public ResponseEntity<List<BookDto>> getAllBooks(@RequestParam(defaultValue = "0") int page,
-                                                     @RequestParam(defaultValue = "10") int size) {
-        List<BookDto> books = bookService.getAllBooks();
+    public ResponseEntity<List<BookResponseDto>> getAllBooks(@RequestParam(defaultValue = "0") int page,
+                                                            @RequestParam(defaultValue = "10") int size) {
+        List<BookResponseDto> books = bookService.getAllBooks();
         return ResponseEntity.ok(books);
     }
 }

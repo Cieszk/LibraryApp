@@ -5,15 +5,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
 import pl.cieszk.libraryapp.features.books.repository.BookInstanceRepository;
-import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
-import pl.cieszk.libraryapp.features.books.application.BookInstanceService;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.any;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)

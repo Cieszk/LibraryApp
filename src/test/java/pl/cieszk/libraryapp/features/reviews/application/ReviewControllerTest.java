@@ -1,6 +1,5 @@
 package pl.cieszk.libraryapp.features.reviews.application;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,10 +16,8 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import pl.cieszk.libraryapp.core.config.JwtAuthenticationFilter;
 import pl.cieszk.libraryapp.core.config.SecurityConfiguration;
-import pl.cieszk.libraryapp.core.exceptions.custom.UnauthorizedAccessException;
 import pl.cieszk.libraryapp.features.auth.application.JwtService;
 import pl.cieszk.libraryapp.features.auth.domain.User;
-import pl.cieszk.libraryapp.features.publishers.domain.Publisher;
 import pl.cieszk.libraryapp.features.reviews.domain.Review;
 
 import java.util.List;

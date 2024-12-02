@@ -17,15 +17,15 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import pl.cieszk.libraryapp.core.config.JwtAuthenticationFilter;
 import pl.cieszk.libraryapp.core.config.SecurityConfiguration;
+import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
+import pl.cieszk.libraryapp.features.auth.application.JwtService;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.auth.domain.enums.UserRole;
-import pl.cieszk.libraryapp.features.auth.application.JwtService;
+import pl.cieszk.libraryapp.features.books.application.BookService;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
-import pl.cieszk.libraryapp.features.books.application.BookService;
-import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
-import pl.cieszk.libraryapp.shared.dto.BookUserRequest;
 import pl.cieszk.libraryapp.features.loans.domain.BookLoan;
+import pl.cieszk.libraryapp.shared.dto.BookUserRequest;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -34,11 +34,13 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = BookLoanController.class)
 @Import(SecurityConfiguration.class)

@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import pl.cieszk.libraryapp.features.publishers.application.dto.PublisherRequestDto;
+import pl.cieszk.libraryapp.features.publishers.application.dto.PublisherResponseDto;
 import pl.cieszk.libraryapp.features.publishers.domain.Publisher;
 
 import java.util.List;
@@ -16,22 +18,22 @@ public class PublisherController {
     private final PublisherService publisherService;
 
     @GetMapping
-    public ResponseEntity<List<Publisher>> getAllPublishers() {
+    public ResponseEntity<List<PublisherResponseDto>> getAllPublishers() {
         return ResponseEntity.ok(publisherService.getAllPublishers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Publisher> getPublisherById(@PathVariable Long id) {
-        return ResponseEntity.ok(publisherService.getPublisherEntityById(id));
+    public ResponseEntity<PublisherResponseDto> getPublisherById(@PathVariable Long id) {
+        return ResponseEntity.ok(publisherService.getPublisherById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Publisher> addPublisher(@RequestBody Publisher publisher) {
+    public ResponseEntity<PublisherResponseDto> addPublisher(@RequestBody PublisherRequestDto publisher) {
         return ResponseEntity.ok(publisherService.addPublisher(publisher));
     }
 
     @PutMapping
-    public ResponseEntity<Publisher> updatePublisher(@RequestBody Publisher publisher) {
+    public ResponseEntity<PublisherResponseDto> updatePublisher(@RequestBody PublisherRequestDto publisher) {
         return ResponseEntity.ok(publisherService.updatePublisher(publisher));
     }
 

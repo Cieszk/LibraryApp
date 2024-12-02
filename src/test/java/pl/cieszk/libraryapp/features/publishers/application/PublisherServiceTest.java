@@ -7,6 +7,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.cieszk.libraryapp.core.exceptions.custom.PublisherNotFoundException;
+import pl.cieszk.libraryapp.features.publishers.application.dto.PublisherRequestDto;
+import pl.cieszk.libraryapp.features.publishers.application.dto.PublisherResponseDto;
+import pl.cieszk.libraryapp.features.publishers.application.mapper.PublisherMapper;
 import pl.cieszk.libraryapp.features.publishers.domain.Publisher;
 import pl.cieszk.libraryapp.features.publishers.repository.PublisherRepository;
 
@@ -26,10 +29,32 @@ public class PublisherServiceTest {
     @InjectMocks
     private PublisherService publisherService;
 
+    @Mock
+    private PublisherMapper publisherMapper;
+
+    private PublisherResponseDto publisherDto;
+
     private Publisher publisher;
+
+    private PublisherRequestDto publisherRequestDto;
 
     @BeforeEach
     public void setUp() {
+        publisherDto = PublisherResponseDto.builder()
+                .name("Publisher")
+                .address("Address")
+                .website("Website")
+                .contactNumber("123456789")
+                .build();
+
+        publisherRequestDto = PublisherRequestDto.builder()
+                .id(1L)
+                .name("Publisher")
+                .address("Address")
+                .website("Website")
+                .contactNumber("123456789")
+                .build();
+
         publisher = Publisher.builder()
                 .publisherId(1L)
                 .name("Publisher")
@@ -43,12 +68,13 @@ public class PublisherServiceTest {
     public void getPublisherEntityById_ShouldReturnPublisher() {
         // Given
         when(publisherRepository.findById(1L)).thenReturn(Optional.of(publisher));
+        when(publisherMapper.toResponseDto(publisher)).thenReturn(publisherDto);
 
         // When
-        Publisher result = publisherService.getPublisherEntityById(1L);
+        PublisherResponseDto result = publisherService.getPublisherById(1L);
 
         // Then
-        assertEquals(publisher, result);
+        assertEquals(publisherDto, result);
         verify(publisherRepository).findById(1L);
     }
 
@@ -58,7 +84,7 @@ public class PublisherServiceTest {
         when(publisherRepository.findById(1L)).thenReturn(Optional.empty());
 
         // When
-        PublisherNotFoundException ex = assertThrows(PublisherNotFoundException.class, () -> publisherService.getPublisherEntityById(1L));
+        PublisherNotFoundException ex = assertThrows(PublisherNotFoundException.class, () -> publisherService.getPublisherById(1L));
 
         // Then
         assertEquals("Publisher not found", ex.getMessage());
@@ -68,12 +94,13 @@ public class PublisherServiceTest {
     public void getAllPublishers_ShouldReturnListOfPublishers() {
         // Given
         when(publisherRepository.findAll()).thenReturn(List.of(publisher));
+        when(publisherMapper.toResponseDto(publisher)).thenReturn(publisherDto);
 
         // When
-        List<Publisher> result = publisherService.getAllPublishers();
+        List<PublisherResponseDto> result = publisherService.getAllPublishers();
 
         // Then
-        assertEquals(List.of(publisher), result);
+        assertEquals(List.of(publisherDto), result);
         verify(publisherRepository).findAll();
         assertEquals(1, result.size());
     }
@@ -82,12 +109,14 @@ public class PublisherServiceTest {
     public void addPublisher_ShouldReturnPublisher() {
         // Given
         when(publisherRepository.save(publisher)).thenReturn(publisher);
+        when(publisherMapper.toResponseDto(publisher)).thenReturn(publisherDto);
+        when(publisherMapper.toEntity(publisherRequestDto)).thenReturn(publisher);
 
         // When
-        Publisher result = publisherService.addPublisher(publisher);
+        PublisherResponseDto result = publisherService.addPublisher(publisherRequestDto);
 
         // Then
-        assertEquals(publisher, result);
+        assertEquals(publisherDto, result);
         verify(publisherRepository).save(publisher);
     }
 
@@ -96,12 +125,14 @@ public class PublisherServiceTest {
         // Given
         when(publisherRepository.existsById(1L)).thenReturn(true);
         when(publisherRepository.save(publisher)).thenReturn(publisher);
+        when(publisherMapper.toResponseDto(publisher)).thenReturn(publisherDto);
+        when(publisherMapper.toEntity(publisherRequestDto)).thenReturn(publisher);
 
         // When
-        Publisher result = publisherService.updatePublisher(publisher);
+        PublisherResponseDto result = publisherService.updatePublisher(publisherRequestDto);
 
         // Then
-        assertEquals(publisher, result);
+        assertEquals(publisherDto, result);
         verify(publisherRepository).existsById(1L);
         verify(publisherRepository).save(publisher);
     }
@@ -112,7 +143,7 @@ public class PublisherServiceTest {
         when(publisherRepository.existsById(1L)).thenReturn(false);
 
         // When
-        PublisherNotFoundException ex = assertThrows(PublisherNotFoundException.class, () -> publisherService.updatePublisher(publisher));
+        PublisherNotFoundException ex = assertThrows(PublisherNotFoundException.class, () -> publisherService.updatePublisher(publisherRequestDto));
 
         // Then
         assertEquals("Publisher not found", ex.getMessage());

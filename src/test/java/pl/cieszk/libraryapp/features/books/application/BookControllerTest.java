@@ -18,9 +18,8 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import pl.cieszk.libraryapp.core.config.JwtAuthenticationFilter;
 import pl.cieszk.libraryapp.core.config.SecurityConfiguration;
 import pl.cieszk.libraryapp.features.auth.application.JwtService;
-import pl.cieszk.libraryapp.features.books.application.dto.BookDto;
-import pl.cieszk.libraryapp.features.books.application.BookController;
-import pl.cieszk.libraryapp.features.books.application.BookService;
+import pl.cieszk.libraryapp.features.books.application.dto.BookRequestDto;
+import pl.cieszk.libraryapp.features.books.application.dto.BookResponseDto;
 
 import java.util.List;
 
@@ -63,12 +62,12 @@ class BookControllerTest {
     @MockBean
     private AuthenticationProvider authenticationProvider;
 
-    private BookDto bookDto;
+    private BookResponseDto bookDto;
     private String token;
 
     @BeforeEach
     void setUp() {
-        bookDto = new BookDto();
+        bookDto = new BookResponseDto();
         bookDto.setTitle("Test Book");
 
         // Mock the JwtService to return a valid token
@@ -86,7 +85,7 @@ class BookControllerTest {
     @WithMockUser(roles = "ADMIN")
     void addBook_WithAdminRole_ShouldCreateBook() throws Exception {
         // Given
-        when(bookService.createBook(any(BookDto.class))).thenReturn(bookDto);
+        when(bookService.createBook(any(BookRequestDto.class))).thenReturn(bookDto);
 
         // When & Then
         mockMvc.perform(post("/api/books")
@@ -107,7 +106,7 @@ class BookControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookDto)))
                 .andExpect(status().isForbidden());
-        verify(bookService, never()).createBook(any(BookDto.class));
+        verify(bookService, never()).createBook(any(BookRequestDto.class));
     }
 
     @Test
@@ -115,7 +114,7 @@ class BookControllerTest {
     void updateBook_WithAdminRole_ShouldUpdateBook() throws Exception {
         // Given
         Long bookId = 1L;
-        when(bookService.updateBook(eq(bookId), any(BookDto.class))).thenReturn(bookDto);
+        when(bookService.updateBook(eq(bookId), any(BookRequestDto.class))).thenReturn(bookDto);
 
         // When & Then
         mockMvc.perform(put("/api/books/{id}", bookId)
@@ -124,7 +123,7 @@ class BookControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value(bookDto.getTitle()));
 
-        verify(bookService).updateBook(eq(bookId), any(BookDto.class));
+        verify(bookService).updateBook(eq(bookId), any(BookRequestDto.class));
     }
 
     @Test

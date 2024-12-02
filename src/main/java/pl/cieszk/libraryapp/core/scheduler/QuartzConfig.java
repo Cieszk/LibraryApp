@@ -3,7 +3,6 @@ package pl.cieszk.libraryapp.core.scheduler;
 import org.quartz.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import pl.cieszk.libraryapp.core.scheduler.FineCalculationJob;
 
 @Configuration
 public class QuartzConfig {

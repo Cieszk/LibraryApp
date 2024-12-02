@@ -1,11 +1,9 @@
 package pl.cieszk.libraryapp.features.reviews.application;
 
 import lombok.AllArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import pl.cieszk.libraryapp.core.exceptions.custom.ReviewNotFoundException;
 import pl.cieszk.libraryapp.core.exceptions.custom.UnauthorizedAccessException;
-import pl.cieszk.libraryapp.features.auth.application.AuthService;
 import pl.cieszk.libraryapp.features.auth.application.UserService;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.auth.domain.enums.UserRole;

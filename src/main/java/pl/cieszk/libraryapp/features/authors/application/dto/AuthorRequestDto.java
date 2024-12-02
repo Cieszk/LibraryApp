@@ -11,7 +11,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AuthorDto {
+public class AuthorRequestDto {
     private Long id;
     private String firstName;
     private String lastName;

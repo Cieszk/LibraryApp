@@ -1,16 +1,18 @@
 package pl.cieszk.libraryapp.features.books.application;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import pl.cieszk.libraryapp.features.books.application.dto.BookDto;
-import pl.cieszk.libraryapp.features.books.domain.Book;
-import pl.cieszk.libraryapp.features.books.repository.BookRepository;
 import pl.cieszk.libraryapp.core.exceptions.custom.ResourceAlreadyExistsException;
 import pl.cieszk.libraryapp.core.exceptions.custom.ResourceNotFoundException;
-import pl.cieszk.libraryapp.features.books.application.BookService;
+import pl.cieszk.libraryapp.features.books.application.dto.BookRequestDto;
+import pl.cieszk.libraryapp.features.books.application.dto.BookResponseDto;
+import pl.cieszk.libraryapp.features.books.application.mapper.BookMapper;
+import pl.cieszk.libraryapp.features.books.domain.Book;
+import pl.cieszk.libraryapp.features.books.repository.BookRepository;
 
 import java.util.*;
 
@@ -22,26 +24,48 @@ public class BookServiceTest {
     @Mock
     private BookRepository bookRepository;
 
+    @Mock
+    private BookMapper bookMapper;
+
     @InjectMocks
     private BookService bookService;
+
+    private Book book;
+
+    private BookResponseDto bookResponseDto;
+
+    private BookRequestDto bookRequestDto;
+
+    @BeforeEach
+    void setUp() {
+        bookRequestDto = BookRequestDto.builder()
+                .id(1L)
+                .title("Title")
+                .isbn("ISBN")
+                .build();
+
+        book = Book.builder()
+                .bookId(1L)
+                .title("Title")
+                .isbn("ISBN")
+                .build();
+
+        bookResponseDto = BookResponseDto.builder()
+                .id(1L)
+                .title("Title")
+                .isbn("ISBN")
+                .build();
+    }
 
     @Test
     void getAllBooks_ShouldReturnListOfBooks() {
         // Given
-        List<Book> mockBooks = new ArrayList<>(Arrays.asList(
-                Book.builder()
-                        .bookId(1L)
-                        .title("Title1")
-                        .build(),
-                Book.builder()
-                        .bookId(2L)
-                        .title("Title2")
-                        .build()
-        ));
+        List<Book> mockBooks = Arrays.asList(book, book, book);
         when(bookRepository.findAll()).thenReturn(mockBooks);
+        when(bookMapper.toResponseDto(any(Book.class))).thenReturn(bookResponseDto);
 
         // When
-        List<BookDto> result = bookService.getAllBooks();
+        List<BookResponseDto> result = bookService.getAllBooks();
 
         // Then
         assertNotNull(result);
@@ -56,7 +80,7 @@ public class BookServiceTest {
         when(bookRepository.findAll()).thenReturn(emptyListMock);
 
         // When
-        List<BookDto> result = bookService.getAllBooks();
+        List<BookResponseDto> result = bookService.getAllBooks();
 
         // Then
         assertNotNull(result);
@@ -67,16 +91,12 @@ public class BookServiceTest {
     @Test
     void getBookById_ShouldReturnBook_WhenBookExists() {
         // Given
-        Long bookId = 1L;
-        Book mockBook = Book.builder()
-                .bookId(bookId)
-                .title("Title")
-                .isbn("ISBN")
-                .build();
-        when(bookRepository.findById(bookId)).thenReturn(Optional.of(mockBook));
+        Long bookId = book.getBookId();
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+        when(bookMapper.toResponseDto(book)).thenReturn(bookResponseDto);
 
         // When
-        BookDto result = bookService.getBookById(bookId);
+        BookResponseDto result = bookService.getBookById(bookId);
 
         // Then
         assertNotNull(result);
@@ -88,7 +108,7 @@ public class BookServiceTest {
     @Test
     void getBookById_ShouldThrowResourceNotFoundException_WhenBookNotFound() {
         // Given
-        Long bookId = 1L;
+        Long bookId = book.getBookId();
         when(bookRepository.findById(bookId)).thenThrow(new ResourceNotFoundException("Book not found"));
 
         // When & Then
@@ -100,49 +120,38 @@ public class BookServiceTest {
     @Test
     void createBook_ShouldReturnBook_WhenBookExist() {
         // Given
-        Book mockBook = Book.builder()
-                .title("Title")
-                .isbn("ISBN")
-                .build();
-
-        BookDto mockBookDto = BookDto.builder()
-                .title("Title")
-                .isbn("ISBN")
-                .build();
-
-        when(bookRepository.existsByIsbn(mockBookDto.getIsbn())).thenReturn(false);
-        when(bookRepository.save(any(Book.class))).thenReturn(mockBook);
+        when(bookRepository.existsByIsbn(bookRequestDto.getIsbn())).thenReturn(false);
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
+        when(bookMapper.toEntity(bookRequestDto)).thenReturn(book);
+        when(bookMapper.toResponseDto(book)).thenReturn(bookResponseDto);
 
         // When
-        BookDto result = bookService.createBook(mockBookDto);
+        BookResponseDto result = bookService.createBook(bookRequestDto);
 
         // Then
-        assertEquals(mockBookDto.getIsbn(), result.getIsbn());
-        assertEquals(mockBookDto.getTitle(), result.getTitle());
+        assertEquals(bookResponseDto.getIsbn(), result.getIsbn());
+        assertEquals(bookResponseDto.getTitle(), result.getTitle());
 
-        verify(bookRepository, times(1)).existsByIsbn(mockBookDto.getIsbn());
+        verify(bookRepository, times(1)).existsByIsbn(bookResponseDto.getIsbn());
         verify(bookRepository, times(1)).save(any(Book.class));
     }
 
     @Test
     void createBook_ShouldThrowResourceAlreadyExistsException_WhenBookExists() {
         // Given
-        BookDto mockBookDto = BookDto.builder()
-                .title("Title")
-                .isbn("ISBN")
-                .build();
-        when(bookRepository.existsByIsbn(mockBookDto.getIsbn())).thenThrow(new ResourceAlreadyExistsException("Book with ISBN " + mockBookDto.getIsbn() +  "already exist."));
+        when(bookRepository.existsByIsbn(bookRequestDto.getIsbn())).thenReturn(true);
+        when(bookMapper.toEntity(bookRequestDto)).thenReturn(book);
 
         // When & Then
-        assertThrows(ResourceAlreadyExistsException.class,() -> bookService.createBook(mockBookDto));
-        verify(bookRepository, times(1)).existsByIsbn(mockBookDto.getIsbn());
+        assertThrows(ResourceAlreadyExistsException.class,() -> bookService.createBook(bookRequestDto));
+        verify(bookRepository, times(1)).existsByIsbn(bookRequestDto.getIsbn());
     }
 
     @Test
     void updateBook_ShouldThrowResourceNotFoundException_WhenBookNotFound() {
         // Given
         Long bookId = 1L;
-        BookDto mockBookDto = BookDto.builder()
+        BookRequestDto mockBookDto = BookRequestDto.builder()
                 .id(bookId)
                 .build();
         when(bookRepository.findById(mockBookDto.getId())).thenThrow(new ResourceNotFoundException("Book not found"));
@@ -155,31 +164,20 @@ public class BookServiceTest {
     @Test
     void updateBook_ShouldReturnUpdatedBook_WhenBookExist() {
         // Given
-        Long bookId = 1L;
-        BookDto mockBookDto = BookDto.builder()
-                .id(bookId)
-                .title("updatedTitle")
-                .description("updatedDescription")
-                .build();
-
-        Book mockBook = Book.builder()
-                .bookId(bookId)
-                .title("Title")
-                .description("Description")
-                .build();
-
-        when(bookRepository.findById(bookId)).thenReturn(Optional.of(mockBook));
-        when(bookRepository.save(any(Book.class))).thenReturn(mockBook);
+        Long bookId = book.getBookId();
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
+        when(bookMapper.toResponseDto(book)).thenReturn(bookResponseDto);
 
         // When
-        BookDto updatedBook = bookService.updateBook(bookId, mockBookDto);
+        BookResponseDto updatedBook = bookService.updateBook(bookId, bookRequestDto);
 
         // Then
-        assertEquals(mockBookDto.getTitle(), updatedBook.getTitle());
-        assertEquals(mockBookDto.getDescription(), updatedBook.getDescription());
-        assertEquals(mockBookDto.getId(), updatedBook.getId());
+        assertEquals(bookResponseDto.getTitle(), updatedBook.getTitle());
+        assertEquals(bookResponseDto.getDescription(), updatedBook.getDescription());
+        assertEquals(bookResponseDto.getId(), updatedBook.getId());
         verify(bookRepository, times(1)).findById(bookId);
-        verify(bookRepository, times(1)).save(mockBook);
+        verify(bookRepository, times(1)).save(book);
     }
 
     @Test
