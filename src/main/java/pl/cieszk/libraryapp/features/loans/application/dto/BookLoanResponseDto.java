@@ -14,11 +14,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class BookLoanResponseDto {
-    LocalDateTime loanDate;
-    LocalDateTime returnDate;
-    LocalDateTime dueDate;
-    Double fineAmount;
-    Integer renewCount;
-    UserResponseDto user;
-    BookInstanceResponseDto bookInstance;
+    private Long id;
+    private LocalDateTime loanDate;
+    private LocalDateTime returnDate;
+    private LocalDateTime dueDate;
+    private Double fineAmount;
+    private Integer renewCount;
+    private UserResponseDto user;
+    private BookInstanceResponseDto bookInstance;
 }

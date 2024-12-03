@@ -14,6 +14,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class CategoryResponseDto {
+    private Long id;
     private String name;
     private String description;
     private Set<BookResponseDto> books;

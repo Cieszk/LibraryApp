@@ -16,7 +16,6 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class BookRequestDto {
-    private Long id;
     private String title;
     private String genre;
     private Integer publishYear;

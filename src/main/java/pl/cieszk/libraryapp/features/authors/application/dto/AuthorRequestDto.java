@@ -12,7 +12,6 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class AuthorRequestDto {
-    private Long id;
     private String firstName;
     private String lastName;
     private String nationality;

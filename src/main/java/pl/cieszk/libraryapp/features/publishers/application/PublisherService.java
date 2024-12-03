@@ -18,8 +18,8 @@ public class PublisherService {
     private final PublisherRepository publisherRepository;
     private final PublisherMapper publisherMapper;
 
-    public PublisherResponseDto getPublisherById(Long id) {
-        Publisher publisher =  publisherRepository.findById(id)
+    public PublisherResponseDto getPublisherById(PublisherRequestDto publisherRequestDto) {
+        Publisher publisher =  publisherRepository.findByName(publisherRequestDto.getName())
                 .orElseThrow(() -> new PublisherNotFoundException("Publisher not found"));
         return publisherMapper.toResponseDto(publisher);
     }
@@ -34,17 +34,17 @@ public class PublisherService {
         return publisherMapper.toResponseDto(publisherRepository.save(publisherMapper.toEntity(publisher)));
     }
 
-    public PublisherResponseDto updatePublisher(PublisherRequestDto publisher) {
-        if (!publisherRepository.existsById(publisher.getId())) {
+    public PublisherResponseDto updatePublisher(PublisherRequestDto publisherRequestDto) {
+        if (!publisherRepository.existsByName(publisherRequestDto.getName())) {
             throw new PublisherNotFoundException("Publisher not found");
         }
-        return publisherMapper.toResponseDto(publisherRepository.save(publisherMapper.toEntity(publisher)));
+        return publisherMapper.toResponseDto(publisherRepository.save(publisherMapper.toEntity(publisherRequestDto)));
     }
 
-    public void deletePublisher(Long id) {
-        if (!publisherRepository.existsById(id)) {
+    public void deletePublisher(PublisherRequestDto publisherRequestDto) {
+        if (!publisherRepository.existsByName(publisherRequestDto.getName())) {
             throw new PublisherNotFoundException("Publisher not found");
         }
-        publisherRepository.deleteById(id);
+        publisherRepository.deleteByName(publisherRequestDto.getName());
     }
 }

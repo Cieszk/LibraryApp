@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class UserRequestDto {
-    Long id;
     String username;
     String email;
     String role;

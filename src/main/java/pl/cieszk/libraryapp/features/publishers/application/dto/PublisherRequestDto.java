@@ -13,7 +13,6 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class PublisherRequestDto {
-    private Long id;
     private String name;
     private String address;
     private String contactNumber;

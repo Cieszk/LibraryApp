@@ -7,6 +7,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import pl.cieszk.libraryapp.features.auth.application.dto.UserResponseDto;
+import pl.cieszk.libraryapp.features.auth.application.mapper.UserMapper;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.auth.repository.UserRepository;
 
@@ -14,6 +16,7 @@ import pl.cieszk.libraryapp.features.auth.repository.UserRepository;
 @AllArgsConstructor
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
+    private UserMapper userMapper;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -21,8 +24,9 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
-    public User getCurrentUser() {
+    public UserResponseDto getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return (User) authentication.getPrincipal();
+        return userMapper.toResponseDto((User) authentication.getPrincipal());
     }
+
 }

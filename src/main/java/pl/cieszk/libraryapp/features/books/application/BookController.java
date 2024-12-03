@@ -27,18 +27,18 @@ public class BookController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}")
-    public ResponseEntity<BookResponseDto> updateBook(@RequestBody BookRequestDto bookRequestDto, @PathVariable Long id) {
-        BookResponseDto updatedBook = bookService.updateBook(id, bookRequestDto);
+    @PutMapping
+    public ResponseEntity<BookResponseDto> updateBook(@RequestBody BookRequestDto bookRequestDto) {
+        BookResponseDto updatedBook = bookService.updateBook(bookRequestDto);
         return ResponseEntity.ok(updatedBook);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteBook(@PathVariable Long id) {
+    @DeleteMapping
+    public ResponseEntity<Void> deleteBook(@RequestBody BookRequestDto bookRequestDto) {
         System.out.println("User roles: " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
-        bookService.deleteBook(id);
-        return ResponseEntity.ok("Book deleted successfully.");
+        bookService.deleteBook(bookRequestDto);
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")

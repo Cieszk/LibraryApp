@@ -4,19 +4,27 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
 import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
+import pl.cieszk.libraryapp.features.auth.application.dto.UserRequestDto;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.books.application.BookInstanceService;
+import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceResponseDto;
+import pl.cieszk.libraryapp.features.books.application.mapper.BookInstanceMapper;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
+import pl.cieszk.libraryapp.features.loans.application.dto.BookLoanRequestDto;
+import pl.cieszk.libraryapp.features.loans.application.dto.BookLoanResponseDto;
+import pl.cieszk.libraryapp.features.loans.application.mapper.BookLoanMapper;
 import pl.cieszk.libraryapp.features.loans.domain.BookLoan;
 import pl.cieszk.libraryapp.features.loans.repository.BookLoanRepository;
 import pl.cieszk.libraryapp.features.reservations.application.ReservationService;
-import pl.cieszk.libraryapp.features.reservations.domain.Reservation;
+import pl.cieszk.libraryapp.features.reservations.application.dto.ReservationResponseDto;
+import pl.cieszk.libraryapp.shared.dto.BookUserRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,48 +33,52 @@ public class BookLoanService {
     private BookLoanRepository bookLoanRepository;
     private BookInstanceService bookInstanceService;
     private ReservationService reservationService;
+    private BookLoanMapper bookLoanMapper;
+    private BookInstanceMapper bookInstanceMapper;
 
     private final int MAX_LOANS = 5;
 
-    public BookLoan createLoan(Book book, User user) throws BookNotAvailableException, NoReservationFoundException {
-        BookInstance bookInstance;
+    public BookLoanResponseDto createLoan(BookUserRequest bookUserRequest) throws BookNotAvailableException, NoReservationFoundException {
+        BookInstanceResponseDto bookInstance;
+        User user = bookUserRequest.toUser();
+        Book book = bookUserRequest.toBook();
         try {
-            Reservation reservation = reservationService.findReservationByUserAndBook(user, book);
+            ReservationResponseDto reservation = reservationService.findReservationByUserAndBook(bookUserRequest);
             bookInstance = reservation.getBookInstance();
-            reservationService.deleteReservation(reservation.getReservationId());
+            reservationService.deleteReservation(bookUserRequest);
         } catch (NoReservationFoundException e) {
             bookInstance = bookInstanceService.getAnyAvailable(book);
         }
         BookLoan bookLoan = BookLoan.builder()
-                .bookInstance(bookInstance)
+                .bookInstance(bookInstanceMapper.toEntity(bookInstance))
                 .user(user)
                 .loanDate(LocalDateTime.now())
                 .dueDate(LocalDateTime.now().plusWeeks(2))
                 .build();
         bookLoanRepository.save(bookLoan);
-        return bookLoan;
+        return bookLoanMapper.toResponseDto(bookLoan);
     }
 
-    public BookLoan returnBook(Book book, User user) {
-        Optional<BookLoan> bookLoan = bookLoanRepository.findByUserAndBookInstance_Book(user, book);
+    public BookLoanResponseDto returnBook(BookUserRequest bookUserRequest) {
+        Optional<BookLoan> bookLoan = bookLoanRepository.findByUserAndBookInstance_Book(bookUserRequest.toUser(), bookUserRequest.toBook());
         if (bookLoan.isPresent()) {
             bookLoan.get().setReturnDate(LocalDateTime.now());
-            return bookLoanRepository.save(bookLoan.get());
+            return bookLoanMapper.toResponseDto(bookLoanRepository.save(bookLoan.get()));
         } else {
             throw new IllegalArgumentException("Book is not loaned by this user");
         }
     }
 
-    public boolean canUserLoanBook(User user) {
-        return bookLoanRepository.findByUser_UserId(user.getUserId()).size() < MAX_LOANS;
+    public boolean canUserLoanBook(UserRequestDto user) {
+        return bookLoanRepository.findByUser_Email(user.getEmail()).size() < MAX_LOANS;
     }
 
-    public boolean hasActiveLoan(Book book, User user) {
-        return bookLoanRepository.findByUserAndBookInstance_Book(user, book).isPresent();
+    public boolean hasActiveLoan(BookUserRequest bookUserRequest) {
+        return bookLoanRepository.findByUserAndBookInstance_Book(bookUserRequest.toUser(), bookUserRequest.toBook()).isPresent();
     }
 
-    public BookLoan renewLoan(Book book, User user) {
-        Optional<BookLoan> bookLoan = bookLoanRepository.findByUserAndBookInstance_Book(user, book);
+    public BookLoanResponseDto renewLoan(BookUserRequest bookUserRequest) {
+        Optional<BookLoan> bookLoan = bookLoanRepository.findByUserAndBookInstance_Book(bookUserRequest.toUser(), bookUserRequest.toBook());
         if (bookLoan.isPresent()) {
             if (bookLoan.get().getRenewCount() < 2) {
                 bookLoan.get().setRenewCount(bookLoan.get().getRenewCount() + 1);
@@ -78,20 +90,23 @@ public class BookLoanService {
         } else {
             throw new IllegalArgumentException("Book is not loaned by this user");
         }
-        return bookLoan.get();
+        return bookLoanMapper.toResponseDto(bookLoan.get());
     }
 
-    public List<BookLoan> getCurrentUserLoans(Long userId) {
-        return bookLoanRepository.findByUser_UserId(userId);
+    public Set<BookLoanResponseDto> getCurrentUserLoans(UserRequestDto user) {
+        return bookLoanMapper.toResponseDtos(bookLoanRepository.findByUser_Email(user.getEmail()));
     }
 
-    public List<BookLoan> getLoanHistory(Long userId) {
-        return bookLoanRepository.findByUser_UserIdAndReturnDateIsNotNull(userId);
+    public Set<BookLoanResponseDto> getLoanHistory(UserRequestDto user) {
+        return bookLoanMapper.toResponseDtos(bookLoanRepository.findByUser_EmailAndReturnDateIsNotNull(user.getEmail()));
     }
 
-    public Map<BookInstance, Double> getUserFines(Long userId) {
-        return bookLoanRepository.findByUser_UserId(userId).stream()
+    public Map<BookInstanceResponseDto, Double> getUserFines(UserRequestDto user) {
+        return bookLoanRepository.findByUser_Email(user.getEmail()).stream()
                 .filter(bookLoan -> bookLoan.getFineAmount() > 0)
-                .collect(Collectors.groupingBy(BookLoan::getBookInstance, Collectors.summingDouble(BookLoan::getFineAmount)));
+                .collect(Collectors.groupingBy(bookLoan ->
+                    bookInstanceMapper.toResponseDto(bookLoan.getBookInstance()),
+                    Collectors.summingDouble(BookLoan::getFineAmount)
+                ));
     }
 }

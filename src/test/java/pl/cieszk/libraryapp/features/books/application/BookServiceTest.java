@@ -8,11 +8,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.cieszk.libraryapp.core.exceptions.custom.ResourceAlreadyExistsException;
 import pl.cieszk.libraryapp.core.exceptions.custom.ResourceNotFoundException;
+import pl.cieszk.libraryapp.features.authors.application.mapper.AuthorMapper;
 import pl.cieszk.libraryapp.features.books.application.dto.BookRequestDto;
 import pl.cieszk.libraryapp.features.books.application.dto.BookResponseDto;
 import pl.cieszk.libraryapp.features.books.application.mapper.BookMapper;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.repository.BookRepository;
+import pl.cieszk.libraryapp.features.categories.application.mapper.CategoryMapper;
+import pl.cieszk.libraryapp.features.publishers.application.mapper.PublisherMapper;
 
 import java.util.*;
 
@@ -26,6 +29,15 @@ public class BookServiceTest {
 
     @Mock
     private BookMapper bookMapper;
+
+    @Mock
+    private CategoryMapper categoryMapper;
+
+    @Mock
+    private AuthorMapper authorMapper;
+
+    @Mock
+    private PublisherMapper publisherMapper;
 
     @InjectMocks
     private BookService bookService;
@@ -168,6 +180,9 @@ public class BookServiceTest {
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
         when(bookRepository.save(any(Book.class))).thenReturn(book);
         when(bookMapper.toResponseDto(book)).thenReturn(bookResponseDto);
+        when(authorMapper.toEntities(bookRequestDto.getAuthors())).thenReturn(Collections.emptySet());
+        when(categoryMapper.toEntities(bookRequestDto.getCategories())).thenReturn(Collections.emptySet());
+        when(publisherMapper.toEntity(bookRequestDto.getPublisher())).thenReturn(null);
 
         // When
         BookResponseDto updatedBook = bookService.updateBook(bookId, bookRequestDto);

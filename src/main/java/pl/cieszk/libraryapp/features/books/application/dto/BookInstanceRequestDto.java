@@ -8,14 +8,15 @@ import pl.cieszk.libraryapp.features.books.domain.enums.BookStatus;
 import pl.cieszk.libraryapp.features.loans.application.dto.BookLoanRequestDto;
 import pl.cieszk.libraryapp.features.reservations.application.dto.ReservationRequestDto;
 
+import java.util.Set;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class BookInstanceRequestDto {
-    Long id;
-    BookRequestDto book;
-    BookStatus bookStatus;
-    ReservationRequestDto reservation;
-    BookLoanRequestDto bookLoans;
+    private BookRequestDto book;
+    private BookStatus bookStatus;
+    private ReservationRequestDto reservation;
+    private Set<BookLoanRequestDto> bookLoans;
 }

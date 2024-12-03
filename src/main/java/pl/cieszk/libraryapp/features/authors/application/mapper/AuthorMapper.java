@@ -19,6 +19,8 @@ public interface AuthorMapper {
     Author toEntity(AuthorResponseDto authorResponseDto);
     Author toEntity(AuthorRequestDto authorRequestDto);
 
+    Set<Author> toEntities(Set<AuthorRequestDto> AuthorRequestDto);
+
     @Named("MapBooksToIds")
     default Set<Long> mapBooksToIds(Set<Book> books) {
         return books != null ? books.stream()

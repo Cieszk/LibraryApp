@@ -9,10 +9,15 @@ import pl.cieszk.libraryapp.features.loans.domain.BookLoan;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface BookLoanRepository extends JpaRepository<BookLoan, Long> {
     List<BookLoan> findByUser_UserId(Long userId);
+
+    Set<BookLoan> findByUser_Email(String email);
     List<BookLoan> findByBookInstance_BookInstanceId(Long bookInstanceId);
+
+    Set<BookLoan> findByUser_EmailAndReturnDateIsNotNull(String email);
 
     Optional<BookLoan> findByBookInstanceAndReturnDateIsNull(BookInstance bookInstance);
 

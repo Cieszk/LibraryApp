@@ -17,14 +17,14 @@ import java.util.List;
 public class PublisherController {
     private final PublisherService publisherService;
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<PublisherResponseDto>> getAllPublishers() {
         return ResponseEntity.ok(publisherService.getAllPublishers());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<PublisherResponseDto> getPublisherById(@PathVariable Long id) {
-        return ResponseEntity.ok(publisherService.getPublisherById(id));
+    @GetMapping
+    public ResponseEntity<PublisherResponseDto> getPublisherById(@RequestBody PublisherRequestDto publisher) {
+        return ResponseEntity.ok(publisherService.getPublisherById(publisher));
     }
 
     @PostMapping
@@ -37,9 +37,9 @@ public class PublisherController {
         return ResponseEntity.ok(publisherService.updatePublisher(publisher));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePublisher(@PathVariable Long id) {
-        publisherService.deletePublisher(id);
+    @DeleteMapping
+    public ResponseEntity<Void> deletePublisher(@RequestBody PublisherRequestDto publisher) {
+        publisherService.deletePublisher(publisher);
         return ResponseEntity.noContent().build();
     }
 }

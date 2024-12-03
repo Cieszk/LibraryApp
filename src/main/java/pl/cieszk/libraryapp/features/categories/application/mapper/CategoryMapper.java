@@ -17,6 +17,7 @@ public interface CategoryMapper {
     Category toEntity(CategoryResponseDto categoryResponseDto);
     Category toEntity(CategoryRequestDto categoryRequestDto);
     CategoryResponseDto toResponseDto(Category category);
+    Set<Category> toEntities(Set<CategoryRequestDto> categoryRequestDto);
     @Named("MapBooksToIds")
     default Set<Long> mapBooksToIds(Set<Book> books) {
         return books != null ? books.stream()

@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ReservationResponseDto {
+    private Long id;
     private LocalDateTime reservationDate;
     private LocalDateTime returnDate;
 
