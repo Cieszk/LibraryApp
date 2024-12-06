@@ -63,12 +63,17 @@ class BookControllerTest {
     private AuthenticationProvider authenticationProvider;
 
     private BookResponseDto bookDto;
+
+    private BookRequestDto bookRequestDto;
     private String token;
 
     @BeforeEach
     void setUp() {
         bookDto = new BookResponseDto();
-        bookDto.setTitle("Test Book");
+        bookDto.setTitle("Test");
+
+        bookRequestDto = new BookRequestDto();
+        bookRequestDto.setTitle("Test");
 
         // Mock the JwtService to return a valid token
         token = "Bearer valid-jwt-token";
@@ -96,7 +101,7 @@ class BookControllerTest {
                         .content(objectMapper.writeValueAsString(bookDto)))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.title").value("Test Book"));
+                .andExpect(jsonPath("$.title").value("Test"));
     }
 
     @Test
@@ -114,51 +119,53 @@ class BookControllerTest {
     void updateBook_WithAdminRole_ShouldUpdateBook() throws Exception {
         // Given
         Long bookId = 1L;
-        when(bookService.updateBook(eq(bookId), any(BookRequestDto.class))).thenReturn(bookDto);
+        when(bookService.updateBook(any(BookRequestDto.class))).thenReturn(bookDto);
 
         // When & Then
-        mockMvc.perform(put("/api/books/{id}", bookId)
+        mockMvc.perform(put("/api/books", bookId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(bookDto)))
+                        .content(objectMapper.writeValueAsString(bookRequestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value(bookDto.getTitle()));
+                .andExpect(jsonPath("$.title").value(bookRequestDto.getTitle()));
 
-        verify(bookService).updateBook(eq(bookId), any(BookRequestDto.class));
+        verify(bookService).updateBook(any(BookRequestDto.class));
     }
 
     @Test
     @WithMockUser(roles = "USER")
     void updateBook_WithUserRole_ShouldReturnForbidden() throws Exception {
         // When & Then
-        mockMvc.perform(put("/api/books/{id}", 1L)
+        mockMvc.perform(put("/api/books", 1L)
+                        .content(objectMapper.writeValueAsString(bookRequestDto))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookDto)))
                 .andExpect(status().isForbidden());
 
-        verify(bookService, never()).updateBook(any(), any());
+        verify(bookService, never()).updateBook(any());
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void deleteBook_WithAdminRole_ShouldDeleteBook() throws Exception {
         // Given
-        Long bookId = 1L;
-        doNothing().when(bookService).deleteBook(bookId);
+        doNothing().when(bookService).deleteBook(eq(bookRequestDto));
 
         // When & Then
-        mockMvc.perform(delete("/api/books/{id}", bookId))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Book deleted successfully."));
+        mockMvc.perform(delete("/api/books")
+                .content(objectMapper.writeValueAsString(bookRequestDto))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
 
-        verify(bookService).deleteBook(bookId);
+        verify(bookService).deleteBook(bookRequestDto);
     }
 
     @Test
     @WithMockUser(roles = "USER")
     void deleteBook_WithUserRole_ShouldReturnForbidden() throws Exception {
         // When & Then
-        mockMvc.perform(delete("/api/books/{id}", 1L)
+        mockMvc.perform(delete("/api/books")
                         .header("Authorization", token)
+                        .content(objectMapper.writeValueAsString(bookRequestDto))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isForbidden());
@@ -176,7 +183,7 @@ class BookControllerTest {
         mockMvc.perform(get("/api/books"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].title").value("Test Book"));
+                .andExpect(jsonPath("$[0].title").value("Test"));
 
         verify(bookService).getAllBooks();
     }

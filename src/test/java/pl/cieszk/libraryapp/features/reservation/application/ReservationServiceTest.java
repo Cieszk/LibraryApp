@@ -8,14 +8,22 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
 import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
+import pl.cieszk.libraryapp.features.auth.application.mapper.UserMapper;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.books.application.BookInstanceService;
+import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceResponseDto;
+import pl.cieszk.libraryapp.features.books.application.mapper.BookMapper;
+import pl.cieszk.libraryapp.features.books.application.mapper.BookInstanceMapper;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
 import pl.cieszk.libraryapp.features.books.repository.BookInstanceRepository;
 import pl.cieszk.libraryapp.features.reservations.application.ReservationService;
+import pl.cieszk.libraryapp.features.reservations.application.dto.ReservationRequestDto;
+import pl.cieszk.libraryapp.features.reservations.application.dto.ReservationResponseDto;
+import pl.cieszk.libraryapp.features.reservations.application.mapper.ReservationMapper;
 import pl.cieszk.libraryapp.features.reservations.domain.Reservation;
 import pl.cieszk.libraryapp.features.reservations.repository.ReservationRepository;
+import pl.cieszk.libraryapp.shared.dto.BookUserRequest;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -33,6 +41,18 @@ public class ReservationServiceTest {
     @Mock
     private BookInstanceRepository bookInstanceRepository;
 
+    @Mock
+    private UserMapper userMapper;
+
+    @Mock
+    private BookMapper bookMapper;
+
+    @Mock
+    private BookInstanceMapper bookInstanceMapper;
+
+    @Mock
+    private ReservationMapper reservationMapper;
+
     @InjectMocks
     private ReservationService reservationService;
 
@@ -42,8 +62,16 @@ public class ReservationServiceTest {
     private User user;
 
     private Book book;
+    private Reservation reservation;
 
     private BookInstance bookInstance;
+    private BookInstanceResponseDto bookInstanceResponseDto;
+
+    private BookUserRequest bookUserRequest;
+
+    private ReservationResponseDto reservationResponseDto;
+
+    private ReservationRequestDto reservationRequestDto;
 
 
     @BeforeEach
@@ -58,24 +86,46 @@ public class ReservationServiceTest {
                 .bookInstanceId(1L)
                 .book(book)
                 .build();
+        reservation = Reservation.builder()
+                .reservationId(1L)
+                .bookInstance(bookInstance)
+                .user(user)
+                .dueDate(LocalDateTime.now())
+                .build();
+
+        bookInstanceResponseDto = BookInstanceResponseDto.builder()
+                .build();
+
+        bookUserRequest = BookUserRequest.builder()
+                .userMapper(userMapper)
+                .bookMapper(bookMapper)
+                .build();
+
+        reservationResponseDto = ReservationResponseDto.builder()
+                .dueDate(LocalDateTime.now())
+                .build();
+
+        reservationRequestDto = ReservationRequestDto.builder()
+                .build();
     }
 
     @Test
     void createReservation_ShouldReturnReservation() throws BookNotAvailableException {
-        // Given
-        Reservation reservation = Reservation.builder()
-                .bookInstance(bookInstance)
-                .user(user)
-                .build();
-        when(bookInstanceService.getAnyAvailable(book)).thenReturn(bookInstance);
-        when(reservationRepository.save(reservation)).thenReturn(reservation);
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(bookInstanceService.getAnyAvailable(book)).thenReturn(bookInstanceResponseDto);
+        when(bookInstanceMapper.toEntity(bookInstanceResponseDto)).thenReturn(bookInstance);
+        when(reservationRepository.save(any(Reservation.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(reservationMapper.toResponseDto(any(Reservation.class)))
+                .thenReturn(reservationResponseDto);
 
         // When
-        Reservation result = reservationService.createReservation(book, user);
+        ReservationResponseDto result = reservationService.createReservation(bookUserRequest);
 
         // Then
-        assertEquals(reservation, result);
-        verify(reservationRepository, times(1)).save(any());
+        assertEquals(reservationResponseDto, result);
+        verify(reservationRepository, times(1)).save(any(Reservation.class));
         verify(bookInstanceService, times(1)).getAnyAvailable(book);
     }
 
@@ -83,8 +133,10 @@ public class ReservationServiceTest {
     void createReservation_ShouldThrowBookNotAvailableExceptionWhenUserExceededBookReservationLimit() throws BookNotAvailableException {
         // Given
         when(reservationRepository.countByUser_UserId(user.getUserId())).thenReturn(3L);
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookUserRequest.toUser()).thenReturn(user);
         // When
-        BookNotAvailableException exception = assertThrows(BookNotAvailableException.class, () -> reservationService.createReservation(book, user));
+        BookNotAvailableException exception = assertThrows(BookNotAvailableException.class, () -> reservationService.createReservation(bookUserRequest));
 
         // Then
         assertEquals("User has reached maximum number of reservations", exception.getMessage());
@@ -95,27 +147,28 @@ public class ReservationServiceTest {
     @Test
     void findReservationByUserAndBook_ShouldReturnReservation() throws NoReservationFoundException {
         // Given
-        Reservation reservation = Reservation.builder()
-                .bookInstance(bookInstance)
-                .user(user)
-                .build();
+        when(reservationMapper.toResponseDto(reservation)).thenReturn(reservationResponseDto);
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookUserRequest.toUser()).thenReturn(user);
         when(reservationRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(Optional.of(reservation));
 
         // When
-        Reservation result = reservationService.findReservationByUserAndBook(user, book);
+        ReservationResponseDto result = reservationService.findReservationByUserAndBook(bookUserRequest);
 
         // Then
-        assertEquals(reservation, result);
+        assertEquals(reservationResponseDto, result);
         verify(reservationRepository, times(1)).findByUserAndBookInstance_Book(user, book);
     }
 
     @Test
     void findReservationByUserAndBook_ShouldThrowNoReservationFoundException() {
         // Given
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookUserRequest.toUser()).thenReturn(user);
         when(reservationRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(empty());
 
         // When
-        NoReservationFoundException exception = assertThrows(NoReservationFoundException.class, () -> reservationService.findReservationByUserAndBook(user, book));
+        NoReservationFoundException exception = assertThrows(NoReservationFoundException.class, () -> reservationService.findReservationByUserAndBook(bookUserRequest));
 
         // Then
         assertEquals("No reservation found for user and book", exception.getMessage());
@@ -125,25 +178,27 @@ public class ReservationServiceTest {
     @Test
     void deleteReservation_ShouldDeleteReservation() throws NoReservationFoundException {
         // Given
-        Long idReservation = 1L;
-
-        when(reservationRepository.existsById(idReservation)).thenReturn(true);
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(reservationRepository.existsByUserAndBookInstance_Book(user, book)).thenReturn(true);
 
         // When
-        reservationService.deleteReservation(idReservation);
+        reservationService.deleteReservation(bookUserRequest);
 
         // Then
-        verify(reservationRepository, times(1)).deleteById(idReservation);
+        verify(reservationRepository, times(1)).deleteByUserAAndAndBookInstance_Book(user, book);
     }
 
     @Test
     void deleteReservation_ShouldThrowNoReservationFoundException() {
         // Given
         Long idReservation = 1L;
-        when(reservationRepository.existsById(idReservation)).thenReturn(false);
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(reservationRepository.existsByUserAndBookInstance_Book(user, book)).thenReturn(false);
 
         // When
-        NoReservationFoundException exception = assertThrows(NoReservationFoundException.class, () -> reservationService.deleteReservation(idReservation));
+        NoReservationFoundException exception = assertThrows(NoReservationFoundException.class, () -> reservationService.deleteReservation(bookUserRequest));
 
         // Then
         assertEquals("No reservation found with given ID", exception.getMessage());
@@ -158,29 +213,34 @@ public class ReservationServiceTest {
                 .user(user)
                 .dueDate(LocalDateTime.now())
                 .build();
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(reservationRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(Optional.of(reservation));
         when(reservationRepository.save(reservation)).thenReturn(reservation);
+        when(reservationMapper.toResponseDto(reservation)).thenReturn(reservationResponseDto);
 
         // When
-        Reservation result = reservationService.extendReservation(1L);
+        ReservationResponseDto result = reservationService.extendReservation(bookUserRequest);
 
         // Then
         assertNotNull(result.getDueDate());
-        verify(reservationRepository, times(1)).findById(1L);
+        verify(reservationRepository, times(1)).findByUserAndBookInstance_Book(user, book);
         verify(reservationRepository, times(1)).save(reservation);
     }
 
     @Test
     void extendReservation_ShouldThrowNoReservationFoundException() {
         // Given
-        when(reservationRepository.findById(1L)).thenReturn(empty());
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(reservationRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(empty());
 
         // When
-        NoReservationFoundException exception = assertThrows(NoReservationFoundException.class, () -> reservationService.extendReservation(1L));
+        NoReservationFoundException exception = assertThrows(NoReservationFoundException.class, () -> reservationService.extendReservation(bookUserRequest));
 
         // Then
         assertEquals("No reservation found", exception.getMessage());
-        verify(reservationRepository, times(1)).findById(1L);
+        verify(reservationRepository, times(1)).findByUserAndBookInstance_Book(user, book);
         verify(reservationRepository, times(0)).save(any());
     }
 }

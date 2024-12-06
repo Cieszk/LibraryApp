@@ -30,7 +30,7 @@ public class ReservationController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{reservationId}")
+    @PutMapping
     public ResponseEntity<ReservationResponseDto> extendReservation(@RequestBody BookUserRequest bookUserRequest) throws NoReservationFoundException {
         return ResponseEntity.ok(reservationService.extendReservation(bookUserRequest));
     }

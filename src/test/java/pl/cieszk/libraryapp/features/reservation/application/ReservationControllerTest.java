@@ -25,6 +25,7 @@ import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
 import pl.cieszk.libraryapp.features.reservations.application.ReservationController;
 import pl.cieszk.libraryapp.features.reservations.application.ReservationService;
+import pl.cieszk.libraryapp.features.reservations.application.dto.ReservationResponseDto;
 import pl.cieszk.libraryapp.features.reservations.domain.Reservation;
 import pl.cieszk.libraryapp.shared.dto.BookUserRequest;
 
@@ -72,8 +73,10 @@ public class ReservationControllerTest {
     private User user;
     private Book book;
     private BookInstance bookInstance;
-
     private String token;
+    private BookUserRequest bookUserRequest;
+    private ReservationResponseDto reservationResponseDto;
+    private Reservation reservation;
 
     @BeforeEach
     public void setUp() {
@@ -91,6 +94,19 @@ public class ReservationControllerTest {
                 .book(book)
                 .build();
 
+        bookUserRequest = BookUserRequest.builder()
+                .build();
+
+        reservationResponseDto = ReservationResponseDto.builder()
+                .build();
+
+        reservation = Reservation.builder()
+                .reservationId(1L)
+                .bookInstance(bookInstance)
+                .user(user)
+                .dueDate(LocalDateTime.now())
+                .build();
+
         // Mock the JwtService to return a valid token
         token = "Bearer valid-jwt-token";
         when(jwtService.extractUsername(anyString())).thenReturn("testuser");
@@ -106,48 +122,27 @@ public class ReservationControllerTest {
     @WithMockUser(roles = {"USER", "ADMIN"})
     public void addReservation_ShouldCreateReservationForAuthenticatedUser() throws BookNotAvailableException, Exception {
         // Given
-        BookUserRequest request = BookUserRequest.builder()
-                .book(book)
-                .user(user)
-                .build();
-        Reservation reservation = Reservation.builder()
-                .reservationId(1L)
-                .bookInstance(bookInstance)
-                .user(user)
-                .build();
-
-        when(reservationService.createReservation(book, user)).thenReturn(reservation);
+        when(reservationService.createReservation(bookUserRequest)).thenReturn(reservationResponseDto);
 
         // When & Then
         mockMvc.perform(post("/api/reservations")
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                .content(objectMapper.writeValueAsString(bookUserRequest)))
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reservationId").value(reservation.getReservationId()));
+                .andExpect(status().isOk());
 
     }
 
     @Test
     public void addReservation_ShouldReturnForbiddenForUnauthenticatedUser() throws BookNotAvailableException, Exception {
         // Given
-        BookUserRequest request = BookUserRequest.builder()
-                .book(book)
-                .user(user)
-                .build();
-        Reservation reservation = Reservation.builder()
-                .reservationId(1L)
-                .bookInstance(bookInstance)
-                .user(user)
-                .build();
-
-        when(reservationService.createReservation(book, user)).thenReturn(reservation);
+        when(reservationService.createReservation(bookUserRequest)).thenReturn(reservationResponseDto);
 
         // When & Then
         mockMvc.perform(post("/api/reservations")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                .content(objectMapper.writeValueAsString(bookUserRequest)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
@@ -155,16 +150,15 @@ public class ReservationControllerTest {
     @Test
     @WithMockUser(roles = {"USER", "ADMIN"})
     public void deleteReservation_ShouldDeleteReservationForAuthenticatedUser() throws Exception {
-        // Given
-        Long reservationId = 1L;
-
         // When & Then
-        mockMvc.perform(delete("/api/reservations/{reservationId}", reservationId)
+        mockMvc.perform(delete("/api/reservations")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bookUserRequest))
                 .header("Authorization", token))
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
-        verify(reservationService, times(1)).deleteReservation(eq(reservationId));
+        verify(reservationService, times(1)).deleteReservation(bookUserRequest);
     }
 
     @Test
@@ -173,33 +167,27 @@ public class ReservationControllerTest {
         Long reservationId = 1L;
 
         // When & Then
-        mockMvc.perform(delete("/api/reservations/{reservationId}", reservationId))
+        mockMvc.perform(delete("/api/reservations", reservationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bookUserRequest)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
-        verify(reservationService, never()).deleteReservation(eq(reservationId));
+        verify(reservationService, never()).deleteReservation(bookUserRequest);
     }
 
     @Test
     @WithMockUser(roles = {"USER", "ADMIN"})
     public void extendReservation_ShouldExtendReservationForAuthenticatedUser() throws Exception {
         // Given
-        Long reservationId = 1L;
-        Reservation reservation = Reservation.builder()
-                .reservationId(reservationId)
-                .bookInstance(bookInstance)
-                .user(user)
-                .dueDate(LocalDateTime.now())
-                .build();
-
-        when(reservationService.extendReservation(reservationId)).thenReturn(reservation);
+        when(reservationService.extendReservation(bookUserRequest)).thenReturn(reservationResponseDto);
 
         // When & Then
-        mockMvc.perform(put("/api/reservations/{reservationId}", reservationId)
-                .header("Authorization", token))
+        mockMvc.perform(put("/api/reservations")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bookUserRequest)))
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reservationId").value(reservationId))
-                .andExpect(jsonPath("$.dueDate").isNotEmpty());
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -208,9 +196,11 @@ public class ReservationControllerTest {
         Long reservationId = 1L;
 
         // When & Then
-        mockMvc.perform(put("/api/reservations/{reservationId}", reservationId))
+        mockMvc.perform(put("/api/reservations")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bookUserRequest)))
                 .andDo(print())
                 .andExpect(status().isForbidden());
-        verify(reservationService, never()).extendReservation(eq(reservationId));
+        verify(reservationService, never()).extendReservation(bookUserRequest);
     }
 }

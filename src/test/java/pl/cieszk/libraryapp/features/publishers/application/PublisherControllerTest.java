@@ -69,9 +69,15 @@ public class PublisherControllerTest {
 
     private PublisherResponseDto publisherDto;
 
+    private PublisherRequestDto publisherRequestDto;
+
     @BeforeEach
     void setUp() {
         publisherDto = PublisherResponseDto.builder()
+                .name("Publisher")
+                .build();
+
+        publisherRequestDto = PublisherRequestDto.builder()
                 .name("Publisher")
                 .build();
 
@@ -93,7 +99,7 @@ public class PublisherControllerTest {
         when(publisherService.getAllPublishers()).thenReturn(List.of(publisherDto));
 
         // When & Then
-        mockMvc.perform(get("/api/publishers")
+        mockMvc.perform(get("/api/publishers/all")
                 .header("Authorization", token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].name").value("Publisher"));
@@ -102,7 +108,7 @@ public class PublisherControllerTest {
     @Test
     void getAllPublishers_ShouldReturnForbiddenWhenUserIsNotAuthenticated() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/publishers"))
+        mockMvc.perform(get("/api/publishers/all"))
             .andExpect(status().isForbidden());
     }
 
@@ -110,7 +116,7 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "USER")
     void getAllPublishers_ShouldReturnForbiddenWhenUserIsNotAdmin() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/publishers")
+        mockMvc.perform(get("/api/publishers/all")
                 .header("Authorization", token))
             .andExpect(status().isForbidden());
     }
@@ -119,11 +125,13 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "ADMIN")
     void getPublisherById_ShouldReturnPublisher() throws Exception {
         // Given
-        when(publisherService.getPublisherById(1L)).thenReturn(publisherDto);
+        when(publisherService.getPublisherById(publisherRequestDto)).thenReturn(publisherDto);
 
         // When & Then
-        mockMvc.perform(get("/api/publishers/1")
-                .header("Authorization", token))
+        mockMvc.perform(get("/api/publishers")
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(publisherRequestDto)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("Publisher"));
     }
@@ -131,7 +139,9 @@ public class PublisherControllerTest {
     @Test
     void getPublisherById_ShouldThrowForbiddenWhenUserIsNotAuthenticated() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/publishers/1"))
+        mockMvc.perform(get("/api/publishers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(publisherRequestDto)))
             .andExpect(status().isForbidden());
     }
 
@@ -139,10 +149,12 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "ADMIN")
     void getPublisherById_ShouldReturnNotFoundWhenPublisherNotFound() throws Exception {
         // Given
-        when(publisherService.getPublisherById(1L)).thenThrow(new PublisherNotFoundException("Publisher not found"));
+        when(publisherService.getPublisherById(publisherRequestDto)).thenThrow(new PublisherNotFoundException("Publisher not found"));
 
         // When & Then
-        mockMvc.perform(get("/api/publishers/1")
+        mockMvc.perform(get("/api/publishers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(publisherRequestDto))
                 .header("Authorization", token))
             .andExpect(status().isNotFound());
     }
@@ -151,7 +163,9 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "USER")
     void getPublisherById_ShouldReturnForbiddenWhenUserIsNotAdmin() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/publishers/1")
+        mockMvc.perform(get("/api/publishers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(publisherRequestDto))
                 .header("Authorization", token))
             .andExpect(status().isForbidden());
     }
@@ -245,7 +259,9 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "ADMIN")
     void deletePublisher_ShouldReturnNoContent() throws Exception {
         // When & Then
-        mockMvc.perform(delete("/api/publishers/1")
+        mockMvc.perform(delete("/api/publishers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(publisherDto))
                 .header("Authorization", token))
             .andExpect(status().isNoContent());
     }
@@ -253,7 +269,9 @@ public class PublisherControllerTest {
     @Test
     void deletePublisher_ShouldThrowForbiddenWhenUserIsNotAuthenticated() throws Exception {
         // When & Then
-        mockMvc.perform(delete("/api/publishers/1"))
+        mockMvc.perform(delete("/api/publishers")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(publisherDto)))
             .andExpect(status().isForbidden());
     }
 
@@ -261,7 +279,9 @@ public class PublisherControllerTest {
     @WithMockUser(roles = "USER")
     void deletePublisher_ShouldReturnForbiddenWhenUserIsNotAdmin() throws Exception {
         // When & Then
-        mockMvc.perform(delete("/api/publishers/1")
+        mockMvc.perform(delete("/api/publishers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(publisherDto))
                 .header("Authorization", token))
             .andExpect(status().isForbidden());
     }
@@ -271,10 +291,12 @@ public class PublisherControllerTest {
     void deletePublisher_ShouldReturnNotFoundWhenPublisherNotFound() throws Exception {
         // Given
         doThrow(new PublisherNotFoundException("Publisher not found"))
-                .when(publisherService).deletePublisher(1L);
+                .when(publisherService).deletePublisher(publisherRequestDto);
 
         // When & Then
-        mockMvc.perform(delete("/api/publishers/1")
+        mockMvc.perform(delete("/api/publishers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(publisherDto))
                 .header("Authorization", token))
             .andExpect(status().isNotFound());
     }

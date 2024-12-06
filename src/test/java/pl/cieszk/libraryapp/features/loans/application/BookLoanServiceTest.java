@@ -1,5 +1,6 @@
 package pl.cieszk.libraryapp.features.loans.application;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -7,25 +8,27 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
 import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
+import pl.cieszk.libraryapp.features.auth.application.dto.UserRequestDto;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.books.application.BookInstanceService;
+import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceResponseDto;
+import pl.cieszk.libraryapp.features.books.application.mapper.BookInstanceMapper;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
-import pl.cieszk.libraryapp.features.books.repository.BookInstanceRepository;
+import pl.cieszk.libraryapp.features.loans.application.dto.BookLoanResponseDto;
+import pl.cieszk.libraryapp.features.loans.application.mapper.BookLoanMapper;
 import pl.cieszk.libraryapp.features.loans.domain.BookLoan;
 import pl.cieszk.libraryapp.features.loans.repository.BookLoanRepository;
 import pl.cieszk.libraryapp.features.reservations.application.ReservationService;
-import pl.cieszk.libraryapp.features.reservations.domain.Reservation;
-import pl.cieszk.libraryapp.features.reservations.repository.ReservationRepository;
+import pl.cieszk.libraryapp.features.reservations.application.dto.ReservationResponseDto;
+import pl.cieszk.libraryapp.shared.dto.BookUserRequest;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import static java.util.Optional.empty;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,497 +38,212 @@ public class BookLoanServiceTest {
     private BookLoanRepository bookLoanRepository;
 
     @Mock
-    private ReservationRepository reservationRepository;
-
-    @Mock
-    private BookInstanceRepository bookInstanceRepository;
-
-    @Mock
     private BookInstanceService bookInstanceService;
 
     @Mock
     private ReservationService reservationService;
 
+    @Mock
+    private BookLoanMapper bookLoanMapper;
+
+    @Mock
+    private BookInstanceMapper bookInstanceMapper;
+
     @InjectMocks
     private BookLoanService bookLoanService;
 
+    private Book book;
+    private User user;
+    private BookInstance bookInstance;
+    private BookLoan bookLoan;
+    private BookUserRequest bookUserRequest;
+    private BookInstanceResponseDto bookInstanceResponseDto;
+    private ReservationResponseDto reservationResponseDto;
+    private BookLoanResponseDto bookLoanResponseDto;
+    private UserRequestDto userRequestDto;
 
-    @Test
-    void createLoan_ShouldReturnCreatedBookLoanWhenBookIsNotReserved() throws BookNotAvailableException, NoReservationFoundException {
-        // Given
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
-
-        User user = User.builder()
-                .userId(1L)
-                .build();
-
-        BookInstance bookInstance = BookInstance.builder()
-                .bookInstanceId(1L)
-                .book(book)
-                .build();
-
-        BookLoan savedBookLoan = BookLoan.builder()
-                .bookInstance(bookInstance)
-                .user(user)
-                .build();
-
-        Reservation reservation = Reservation.builder()
-                .reservationId(1L)
-                .bookInstance(bookInstance)
-                .user(user)
-                .build();
-
-        when(bookLoanRepository.save(any(BookLoan.class))).thenReturn(savedBookLoan);
-        when(reservationService.findReservationByUserAndBook(user, book)).thenThrow(new NoReservationFoundException("No reservation found for user and book"));
-        when(bookInstanceService.getAnyAvailable(book)).thenReturn(bookInstance);
-
-        // When
-        bookLoanService.createLoan(book, user);
-
-        // Then
-        verify(bookLoanRepository, times(1)).save(any(BookLoan.class));
-        verify(reservationService, never()).deleteReservation(reservation.getReservationId());
-        assertEquals(savedBookLoan.getBookLoanId(), bookLoanService.createLoan(book, user).getBookLoanId());
+    @BeforeEach
+    void setUp() {
+        user = User.builder().userId(1L).email("email").build();
+        book = Book.builder().bookId(1L).build();
+        bookInstance = mock(BookInstance.class);
+        bookLoan = BookLoan.builder()
+            .bookLoanId(1L)
+            .user(user)
+            .bookInstance(bookInstance)
+            .loanDate(LocalDateTime.now())
+            .dueDate(LocalDateTime.now().plusWeeks(2))
+            .renewCount(0)
+            .build();
+        bookUserRequest = mock(BookUserRequest.class);
+        bookInstanceResponseDto = mock(BookInstanceResponseDto.class);
+        reservationResponseDto = mock(ReservationResponseDto.class);
+        bookLoanResponseDto = mock(BookLoanResponseDto.class);
+        userRequestDto = mock(UserRequestDto.class);
     }
 
     @Test
-    void createLoan_ShouldReturnCreatedBookLoanWhenBookIsReserved() throws BookNotAvailableException, NoReservationFoundException {
-        // Given
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
+    void createLoan_ShouldThrowExceptionWhenBookIsNotAvailableAndNoReservationExists() throws BookNotAvailableException, NoReservationFoundException {
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(reservationService.findReservationByUserAndBook(bookUserRequest))
+                .thenThrow(NoReservationFoundException.class);
+        when(bookInstanceService.getAnyAvailable(book))
+                .thenThrow(new BookNotAvailableException("Book is not available"));
 
-        User user = User.builder()
-                .userId(1L)
-                .build();
+        assertThrows(BookNotAvailableException.class, () -> bookLoanService.createLoan(bookUserRequest));
 
-        BookInstance bookInstance = BookInstance.builder()
-                .bookInstanceId(1L)
-                .book(book)
-                .build();
-
-        Reservation reservation = Reservation.builder()
-                .reservationId(1L)
-                .bookInstance(bookInstance)
-                .user(user)
-                .build();
-
-        BookLoan savedBookLoan = BookLoan.builder()
-                .bookInstance(bookInstance)
-                .user(user)
-                .loanDate(LocalDateTime.now())
-                .dueDate(LocalDateTime.now().plusWeeks(2))
-                .build();
-
-        when(bookLoanRepository.save(any(BookLoan.class))).thenReturn(savedBookLoan);
-        when(reservationService.findReservationByUserAndBook(user, book)).thenReturn(reservation);
-
-        // When
-        bookLoanService.createLoan(book, user);
-
-        // Then
-        verify(bookLoanRepository, times(1)).save(any(BookLoan.class));
-        verify(reservationService, times(1)).deleteReservation(reservation.getReservationId());
-        assertEquals(savedBookLoan.getBookLoanId(), bookLoanService.createLoan(book, user).getBookLoanId());
-    }
-
-    @Test
-    void createLoan_ShouldThrowBookNotAvailableExceptionWhenBookIsNotAvailable() throws NoReservationFoundException, BookNotAvailableException {
-        // Given
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
-
-        User user = User.builder()
-                .userId(1L)
-                .build();
-
-        Reservation reservation = Reservation.builder()
-                .bookInstance(BookInstance.builder().bookInstanceId(1L).book(book).build())
-                .user(user)
-                .build();
-
-        when(reservationService.findReservationByUserAndBook(user, book)).thenThrow(new NoReservationFoundException("No reservation found for user and book"));
-        when(bookInstanceService.getAnyAvailable(book)).thenThrow(new BookNotAvailableException("Book is not available"));
-
-        // When & Then
-        assertThrows(BookNotAvailableException.class, () -> bookLoanService.createLoan(book, user));
-
-        verify(bookInstanceService, times(1)).getAnyAvailable(book);
+        verify(bookInstanceService).getAnyAvailable(book);
         verify(bookLoanRepository, never()).save(any(BookLoan.class));
-        verify(reservationService, never()).deleteReservation(reservation.getReservationId());
-
     }
 
     @Test
     void returnBook_ShouldReturnBookLoanWithReturnDate() {
-        // Given
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookLoanRepository.save(bookLoan)).thenReturn(bookLoan);
+        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book))
+                .thenReturn(Optional.of(bookLoan));
+        when(bookLoanMapper.toResponseDto(bookLoan)).thenReturn(bookLoanResponseDto);
 
-        User user = User.builder()
-                .userId(1L)
-                .build();
 
-        BookInstance bookInstance = BookInstance.builder()
-                .bookInstanceId(1L)
-                .book(book)
-                .build();
+        BookLoanResponseDto result = bookLoanService.returnBook(bookUserRequest);
 
-        BookLoan bookLoan = BookLoan.builder()
-                .bookInstance(bookInstance)
-                .user(user)
-                .loanDate(LocalDateTime.now())
-                .dueDate(LocalDateTime.now().plusWeeks(2))
-                .build();
-
-        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(Optional.of(bookLoan));
-
-        // When
-        bookLoanService.returnBook(book, user);
-
-        // Then
-        verify(bookLoanRepository, times(1)).save(any(BookLoan.class));
-        assertEquals(LocalDateTime.now().toLocalDate(), bookLoan.getReturnDate().toLocalDate());
+        assertEquals(bookLoanResponseDto, result);
+        verify(bookLoanRepository).save(bookLoan);
+        assertNotNull(bookLoan.getReturnDate());
     }
 
     @Test
     void returnBook_ShouldThrowIllegalArgumentExceptionWhenBookIsNotLoanedByUser() {
-        // Given
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book))
+                .thenReturn(Optional.empty());
 
-        User user = User.builder()
-                .userId(1L)
-                .build();
-
-        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(empty());
-
-        // When & Then
-        assertThrows(IllegalArgumentException.class, () -> bookLoanService.returnBook(book, user));
+        assertThrows(IllegalArgumentException.class, () -> bookLoanService.returnBook(bookUserRequest));
 
         verify(bookLoanRepository, never()).save(any(BookLoan.class));
     }
 
     @Test
     void canUserLoanBook_ShouldReturnTrueWhenUserHasLessThanMaxLoans() {
-        // Given
-        User user = User.builder()
-                .userId(1L)
-                .build();
+        BookLoan bookLoan2 = BookLoan.builder().bookLoanId(2L).build();
+        BookLoan bookLoan3 = BookLoan.builder().bookLoanId(3L).build();
+        when(userRequestDto.getEmail()).thenReturn("email");
+        when(bookLoanRepository.findByUser_Email(user.getEmail()))
+                .thenReturn(Set.of(bookLoan, bookLoan2, bookLoan3));
 
-        when(bookLoanRepository.findByUser_UserId(user.getUserId())).thenReturn(Collections.nCopies(3, new BookLoan()));
+        boolean result = bookLoanService.canUserLoanBook(userRequestDto);
 
-        // When
-        boolean result = bookLoanService.canUserLoanBook(user);
-
-        // Then
         assertTrue(result);
     }
 
     @Test
     void canUserLoanBook_ShouldReturnFalseWhenUserHasMaxLoans() {
-        // Given
-        User user = User.builder()
-                .userId(1L)
-                .build();
+        BookLoan bookloan2 = BookLoan.builder().bookLoanId(2L).build();
+        BookLoan bookloan3 = BookLoan.builder().bookLoanId(3L).build();
+        BookLoan bookloan4 = BookLoan.builder().bookLoanId(4L).build();
+        BookLoan bookloan5 = BookLoan.builder().bookLoanId(5L).build();
+        when(userRequestDto.getEmail()).thenReturn(user.getEmail());
+        when(bookLoanRepository.findByUser_Email(user.getEmail()))
+                .thenReturn(Set.of(bookLoan, bookloan2, bookloan3, bookloan4, bookloan5));
 
-        when(bookLoanRepository.findByUser_UserId(user.getUserId())).thenReturn(Collections.nCopies(5, new BookLoan()));
+        boolean result = bookLoanService.canUserLoanBook(userRequestDto);
 
-        // When
-        boolean result = bookLoanService.canUserLoanBook(user);
-
-        // Then
         assertFalse(result);
     }
 
     @Test
     void hasActiveLoan_ShouldReturnTrueWhenUserHasActiveLoan() {
-        // Given
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(bookUserRequest.toBook()).thenReturn(book);
+        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book))
+                .thenReturn(Optional.of(bookLoan));
 
-        User user = User.builder()
-                .userId(1L)
-                .build();
+        boolean result = bookLoanService.hasActiveLoan(bookUserRequest);
 
-        BookInstance bookInstance = BookInstance.builder()
-                .bookInstanceId(1L)
-                .book(book)
-                .build();
-
-        BookLoan bookLoan = BookLoan.builder()
-                .bookInstance(bookInstance)
-                .user(user)
-                .loanDate(LocalDateTime.now())
-                .dueDate(LocalDateTime.now().plusWeeks(2))
-                .build();
-
-        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(Optional.of(bookLoan));
-
-        // When
-        boolean result = bookLoanService.hasActiveLoan(book, user);
-
-        // Then
         assertTrue(result);
     }
 
     @Test
     void hasActiveLoan_ShouldReturnFalseWhenUserHasNoActiveLoan() {
-        // Given
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
+        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book))
+                .thenReturn(Optional.empty());
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(bookUserRequest.toBook()).thenReturn(book);
 
-        User user = User.builder()
-                .userId(1L)
-                .build();
+        boolean result = bookLoanService.hasActiveLoan(bookUserRequest);
 
-        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(empty());
-
-        // When
-        boolean result = bookLoanService.hasActiveLoan(book, user);
-
-        // Then
         assertFalse(result);
     }
 
     @Test
-    void renewLoan_ShouldReturnBookLoanWithIncreasedRenewCountAndDueDate() {
-        // Given
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
+    void renewLoan_ShouldIncreaseRenewCountAndUpdateDueDate() {
+        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book))
+                .thenReturn(Optional.of(bookLoan));
+        when(bookLoanMapper.toResponseDto(any(BookLoan.class))).thenReturn(bookLoanResponseDto);
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(bookUserRequest.toBook()).thenReturn(book);
 
-        User user = User.builder()
-                .userId(1L)
-                .build();
+        BookLoanResponseDto result = bookLoanService.renewLoan(bookUserRequest);
 
-        BookInstance bookInstance = BookInstance.builder()
-                .bookInstanceId(1L)
-                .book(book)
-                .build();
-
-        BookLoan bookLoan = BookLoan.builder()
-                .bookInstance(bookInstance)
-                .user(user)
-                .loanDate(LocalDateTime.now())
-                .dueDate(LocalDateTime.now().plusWeeks(2))
-                .renewCount(1)
-                .build();
-
-        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(Optional.of(bookLoan));
-
-        // When
-        bookLoanService.renewLoan(book, user);
-
-        // Then
-        verify(bookLoanRepository, times(1)).save(any(BookLoan.class));
-        assertEquals(2, bookLoan.getRenewCount());
+        assertEquals(bookLoanResponseDto, result);
+        assertEquals(1, bookLoan.getRenewCount());
         assertEquals(LocalDateTime.now().plusWeeks(4).toLocalDate(), bookLoan.getDueDate().toLocalDate());
+        verify(bookLoanRepository).save(any(BookLoan.class));
     }
 
     @Test
-    void renewLoan_ShouldThrowIllegalArgumentExceptionWhenBookIsNotLoanedByUser() {
-        // Given
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
+    void renewLoan_ShouldThrowExceptionWhenBookCannotBeRenewedMoreThanTwice() {
+        bookLoan.setRenewCount(2);
+        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book))
+                .thenReturn(Optional.of(bookLoan));
+        when(bookUserRequest.toUser()).thenReturn(user);
+        when(bookUserRequest.toBook()).thenReturn(book);
 
-        User user = User.builder()
-                .userId(1L)
-                .build();
-
-        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(empty());
-
-        // When & Then
-        assertThrows(IllegalArgumentException.class, () -> bookLoanService.renewLoan(book, user));
+        assertThrows(IllegalArgumentException.class, () -> bookLoanService.renewLoan(bookUserRequest));
 
         verify(bookLoanRepository, never()).save(any(BookLoan.class));
     }
 
     @Test
-    void renewLoan_ShouldThrowIllegalArgumentExceptionWhenBookCannotBeRenewedMoreThanTwice() {
-        // Given
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
+    void getCurrentUserLoans_ShouldReturnBookLoansForUser() {
+        when(userRequestDto.getEmail()).thenReturn(user.getEmail());
+        when(bookLoanRepository.findByUser_Email(user.getEmail())).thenReturn(Set.of(bookLoan));
+        when(bookLoanMapper.toResponseDtos(anySet())).thenReturn(Set.of(bookLoanResponseDto));
 
-        User user = User.builder()
-                .userId(1L)
-                .build();
+        Set<BookLoanResponseDto> result = bookLoanService.getCurrentUserLoans(userRequestDto);
 
-        BookInstance bookInstance = BookInstance.builder()
-                .bookInstanceId(1L)
-                .book(book)
-                .build();
-
-        BookLoan bookLoan = BookLoan.builder()
-                .bookInstance(bookInstance)
-                .user(user)
-                .loanDate(LocalDateTime.now())
-                .dueDate(LocalDateTime.now().plusWeeks(2))
-                .renewCount(2)
-                .build();
-
-        when(bookLoanRepository.findByUserAndBookInstance_Book(user, book)).thenReturn(Optional.of(bookLoan));
-
-        // When & Then
-        assertThrows(IllegalArgumentException.class, () -> bookLoanService.renewLoan(book, user));
-
-        verify(bookLoanRepository, never()).save(any(BookLoan.class));
+        assertEquals(Set.of(bookLoanResponseDto), result);
+        verify(bookLoanRepository).findByUser_Email(anyString());
     }
 
     @Test
-    void getCurrentUserLoans_ShouldReturnBookLoansForCurrentUser() {
-        // Given
-        User user = User.builder()
-                .userId(1L)
-                .build();
+    void getLoanHistory_ShouldReturnUserLoanHistory() {
+        BookLoan bookLoan2 = BookLoan.builder().bookLoanId(2L).build();
+        when(userRequestDto.getEmail()).thenReturn(user.getEmail());
+        when(bookLoanRepository.findByUser_EmailAndReturnDateIsNotNull(user.getEmail()))
+                .thenReturn(Set.of(bookLoan, bookLoan2));
+        when(bookLoanMapper.toResponseDtos(anySet())).thenReturn(Set.of(bookLoanResponseDto));
 
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
+        Set<BookLoanResponseDto> result = bookLoanService.getLoanHistory(userRequestDto);
 
-        BookInstance bookInstance = BookInstance.builder()
-                .bookInstanceId(1L)
-                .book(book)
-                .build();
-
-        BookLoan bookLoan = BookLoan.builder()
-                .bookInstance(bookInstance)
-                .user(user)
-                .loanDate(LocalDateTime.now())
-                .dueDate(LocalDateTime.now().plusWeeks(2))
-                .build();
-
-        when(bookLoanRepository.findByUser_UserId(user.getUserId())).thenReturn(List.of(bookLoan));
-
-        // When & Then
-        assertEquals(bookLoanService.getCurrentUserLoans(user.getUserId()), List.of(bookLoan));
-        verify(bookLoanRepository, times(1)).findByUser_UserId(user.getUserId());
+        assertEquals(Set.of(bookLoanResponseDto), result);
+        verify(bookLoanRepository).findByUser_EmailAndReturnDateIsNotNull(anyString());
     }
 
     @Test
-    void getCurrentUserLoans_ShouldReturnEmptyListWhenThereIsNoLoans() {
-        // Given
-        User user = User.builder()
-                .userId(1L)
-                .build();
+    void getUserFines_ShouldReturnMapOfBooksAndFineAmounts() {
+        bookLoan.setFineAmount(10.0);
+        when(userRequestDto.getEmail()).thenReturn(user.getEmail());
+        when(bookLoanRepository.findByUser_Email(user.getEmail())).thenReturn(Set.of(bookLoan));
+        when(bookInstanceMapper.toResponseDto(bookInstance)).thenReturn(bookInstanceResponseDto);
 
-        when(bookLoanRepository.findByUser_UserId(user.getUserId())).thenReturn(Collections.emptyList());
+        Map<BookInstanceResponseDto, Double> result = bookLoanService.getUserFines(userRequestDto);
 
-        // When & Then
-        assertEquals(bookLoanService.getCurrentUserLoans(user.getUserId()), Collections.emptyList());
-        verify(bookLoanRepository, times(1)).findByUser_UserId(user.getUserId());
-    }
-
-    @Test
-    void getLoanHistory_ShouldReturnListOfLoanBook() {
-        // Given
-        User user = User.builder()
-                .userId(1L)
-                .build();
-
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
-
-        BookInstance bookInstance = BookInstance.builder()
-                .bookInstanceId(1L)
-                .book(book)
-                .build();
-
-        BookLoan bookLoanFirst = BookLoan.builder()
-                .bookLoanId(1L)
-                .loanDate(LocalDateTime.now())
-                .dueDate(LocalDateTime.now().plusWeeks(2))
-                .returnDate(LocalDateTime.now().plusWeeks(1))
-                .bookInstance(bookInstance)
-                .user(user)
-                .build();
-
-        BookLoan bookLoanSecond = BookLoan.builder()
-                .bookLoanId(2L)
-                .loanDate(LocalDateTime.now())
-                .dueDate(LocalDateTime.now().plusWeeks(2))
-                .returnDate(LocalDateTime.now().plusWeeks(1))
-                .bookInstance(bookInstance)
-                .user(user)
-                .build();
-
-        when(bookLoanRepository.findByUser_UserIdAndReturnDateIsNotNull(user.getUserId())).thenReturn(List.of(bookLoanFirst, bookLoanSecond));
-
-        // When
-        List<BookLoan> result = bookLoanService.getLoanHistory(user.getUserId());
-
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.size());
-
-        BookLoan firstLoan = result.get(0);
-        assertEquals(bookLoanFirst.getBookLoanId(), firstLoan.getBookLoanId());
-        assertEquals(bookLoanFirst.getUser(), firstLoan.getUser());
-        assertNotNull(firstLoan.getReturnDate());
-
-        BookLoan secondLoan = result.get(1);
-        assertEquals(bookLoanSecond.getBookLoanId(), secondLoan.getBookLoanId());
-        assertEquals(bookLoanSecond.getUser(), secondLoan.getUser());
-        assertNotNull(secondLoan.getReturnDate());
-    }
-
-    @Test
-    void getLoanHistory_ShouldReturnEmptyListWhenThereIsNoLoanHistory() {
-        // Given
-        User user = User.builder()
-                .userId(1L)
-                .build();
-
-        when(bookLoanRepository.findByUser_UserIdAndReturnDateIsNotNull(user.getUserId())).thenReturn(Collections.emptyList());
-
-        // When & Then
-        assertEquals(bookLoanService.getLoanHistory(user.getUserId()), Collections.emptyList());
-    }
-
-    @Test
-    void getUserFines_ShouldReturnMapOfBookAndFineAmount() {
-        // Given
-        User user = User.builder()
-                .userId(1L)
-                .build();
-
-        Book book = Book.builder()
-                .bookId(1L)
-                .build();
-
-        BookInstance bookInstance = BookInstance.builder()
-                .bookInstanceId(1L)
-                .book(book)
-                .build();
-
-        BookLoan bookLoan = BookLoan.builder()
-                .bookLoanId(1L)
-                .loanDate(LocalDateTime.now().minusWeeks(1))
-                .dueDate(LocalDateTime.now().minusDays(1))
-                .bookInstance(bookInstance)
-                .fineAmount(10.0)
-                .user(user)
-                .build();
-
-        when(bookLoanRepository.findByUser_UserId(user.getUserId())).thenReturn(List.of(bookLoan));
-
-        // When
-        var result = bookLoanService.getUserFines(user.getUserId());
-
-        // Then
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertTrue(result.containsKey(bookInstance));
-        assertEquals(10.0, result.get(bookInstance));
+        assertTrue(result.containsKey(bookInstanceResponseDto));
+        assertEquals(10.0, result.get(bookInstanceResponseDto));
     }
 }

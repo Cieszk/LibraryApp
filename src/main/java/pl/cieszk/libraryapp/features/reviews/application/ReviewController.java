@@ -45,7 +45,7 @@ public class ReviewController {
     }
 
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Void> deleteReview(@RequestBody ReviewRequestDto review) throws UnauthorizedAccessException {
         reviewService.deleteReview(review);

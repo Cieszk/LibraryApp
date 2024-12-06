@@ -48,7 +48,6 @@ public class PublisherServiceTest {
                 .build();
 
         publisherRequestDto = PublisherRequestDto.builder()
-                .id(1L)
                 .name("Publisher")
                 .address("Address")
                 .website("Website")
@@ -67,24 +66,24 @@ public class PublisherServiceTest {
     @Test
     public void getPublisherEntityById_ShouldReturnPublisher() {
         // Given
-        when(publisherRepository.findById(1L)).thenReturn(Optional.of(publisher));
+        when(publisherRepository.findByName(publisher.getName())).thenReturn(Optional.of(publisher));
         when(publisherMapper.toResponseDto(publisher)).thenReturn(publisherDto);
 
         // When
-        PublisherResponseDto result = publisherService.getPublisherById(1L);
+        PublisherResponseDto result = publisherService.getPublisherById(publisherRequestDto);
 
         // Then
         assertEquals(publisherDto, result);
-        verify(publisherRepository).findById(1L);
+        verify(publisherRepository).findByName(publisher.getName());
     }
 
     @Test
     public void getPublisherById_ShouldThrowPublisherNotFoundException() {
         // Given
-        when(publisherRepository.findById(1L)).thenReturn(Optional.empty());
+        when(publisherRepository.findByName(publisher.getName())).thenReturn(Optional.empty());
 
         // When
-        PublisherNotFoundException ex = assertThrows(PublisherNotFoundException.class, () -> publisherService.getPublisherById(1L));
+        PublisherNotFoundException ex = assertThrows(PublisherNotFoundException.class, () -> publisherService.getPublisherById(publisherRequestDto));
 
         // Then
         assertEquals("Publisher not found", ex.getMessage());
@@ -123,7 +122,7 @@ public class PublisherServiceTest {
     @Test
     public void updatePublisher_ShouldReturnUpdatedPublisher() {
         // Given
-        when(publisherRepository.existsById(1L)).thenReturn(true);
+        when(publisherRepository.existsByName(publisher.getName())).thenReturn(true);
         when(publisherRepository.save(publisher)).thenReturn(publisher);
         when(publisherMapper.toResponseDto(publisher)).thenReturn(publisherDto);
         when(publisherMapper.toEntity(publisherRequestDto)).thenReturn(publisher);
@@ -133,14 +132,14 @@ public class PublisherServiceTest {
 
         // Then
         assertEquals(publisherDto, result);
-        verify(publisherRepository).existsById(1L);
+        verify(publisherRepository).existsByName(publisher.getName());
         verify(publisherRepository).save(publisher);
     }
 
     @Test
     public void updatePublisher_ShouldThrowPublisherNotFoundException() {
         // Given
-        when(publisherRepository.existsById(1L)).thenReturn(false);
+        when(publisherRepository.existsByName(publisher.getName())).thenReturn(false);
 
         // When
         PublisherNotFoundException ex = assertThrows(PublisherNotFoundException.class, () -> publisherService.updatePublisher(publisherRequestDto));
@@ -152,23 +151,23 @@ public class PublisherServiceTest {
     @Test
     public void deletePublisher_ShouldDeletePublisher() {
         // Given
-        when(publisherRepository.existsById(1L)).thenReturn(true);
+        when(publisherRepository.existsByName(publisher.getName())).thenReturn(true);
 
         // When
-        publisherService.deletePublisher(1L);
+        publisherService.deletePublisher(publisherRequestDto);
 
         // Then
-        verify(publisherRepository).existsById(1L);
-        verify(publisherRepository).deleteById(1L);
+        verify(publisherRepository).existsByName(publisher.getName());
+        verify(publisherRepository).deleteByName(publisher.getName());
     }
 
     @Test
     public void deletePublisher_ShouldThrowPublisherNotFoundException() {
         // Given
-        when(publisherRepository.existsById(1L)).thenReturn(false);
+        when(publisherRepository.existsByName(publisher.getName())).thenReturn(false);
 
         // When
-        PublisherNotFoundException ex = assertThrows(PublisherNotFoundException.class, () -> publisherService.deletePublisher(1L));
+        PublisherNotFoundException ex = assertThrows(PublisherNotFoundException.class, () -> publisherService.deletePublisher(publisherRequestDto));
 
         // Then
         assertEquals("Publisher not found", ex.getMessage());

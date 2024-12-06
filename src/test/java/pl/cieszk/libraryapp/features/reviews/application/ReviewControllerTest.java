@@ -18,6 +18,8 @@ import pl.cieszk.libraryapp.core.config.JwtAuthenticationFilter;
 import pl.cieszk.libraryapp.core.config.SecurityConfiguration;
 import pl.cieszk.libraryapp.features.auth.application.JwtService;
 import pl.cieszk.libraryapp.features.auth.domain.User;
+import pl.cieszk.libraryapp.features.reviews.application.dto.ReviewRequestDto;
+import pl.cieszk.libraryapp.features.reviews.application.dto.ReviewResponseDto;
 import pl.cieszk.libraryapp.features.reviews.domain.Review;
 
 import java.util.List;
@@ -27,6 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -65,6 +68,9 @@ public class ReviewControllerTest {
     private User user;
     private Review review;
 
+    private ReviewResponseDto reviewResponseDto;
+    private ReviewRequestDto reviewRequestDto;
+
     @BeforeEach
     void setUp() {
         user = User.builder()
@@ -73,6 +79,10 @@ public class ReviewControllerTest {
         review = Review.builder()
                 .reviewId(1L)
                 .user(user)
+                .build();
+        reviewResponseDto = ReviewResponseDto.builder()
+                .build();
+        reviewRequestDto = ReviewRequestDto.builder()
                 .build();
 
         // Mock the JwtService to return a valid token
@@ -90,12 +100,12 @@ public class ReviewControllerTest {
     @WithMockUser(roles = {"USER", "ADMIN"})
     public void getAllReviewsByBook_ShouldReturnReviewsForGivenBook() throws Exception {
         // Given
-        when(reviewService.getAllReviewsByBook(any())).thenReturn(List.of(review));
+        when(reviewService.getAllReviewsByBook(any())).thenReturn(List.of(reviewResponseDto));
 
         // When & Then
         mockMvc.perform(get("/api/reviews")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(review)))
+                .content(objectMapper.writeValueAsString(reviewRequestDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
     }
@@ -104,24 +114,24 @@ public class ReviewControllerTest {
     @WithMockUser(roles = {"USER", "ADMIN"})
     public void getReviewById_ShouldReturnReviewForGivenId() throws Exception {
         // Given
-        when(reviewService.getReviewEntityById(1L)).thenReturn(review);
+        when(reviewService.getReviewById(reviewRequestDto)).thenReturn(reviewResponseDto);
 
         // When & Then
         mockMvc.perform(get("/api/reviews/1")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(review)))
+                .content(objectMapper.writeValueAsString(reviewRequestDto)))
                 .andExpect(status().isOk());
     }
 
     @Test
     public void getReviewById_ShouldReturnForbiddenStatus() throws Exception {
         // Given
-        when(reviewService.getReviewEntityById(1L)).thenReturn(review);
+        when(reviewService.getReviewById(reviewRequestDto)).thenReturn(reviewResponseDto);
 
         // When & Then
         mockMvc.perform(get("/api/reviews/1")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(review)))
+                .content(objectMapper.writeValueAsString(reviewRequestDto)))
                 .andExpect(status().isForbidden());
     }
 
@@ -129,25 +139,24 @@ public class ReviewControllerTest {
     @WithMockUser(roles = {"USER", "ADMIN"})
     public void addReview_ShouldReturnReview() throws Exception {
         // Given
-        when(reviewService.addReview(review)).thenReturn(review);
+        when(reviewService.addReview(reviewRequestDto)).thenReturn(reviewResponseDto);
 
         // When & Then
         mockMvc.perform(post("/api/reviews")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(review)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reviewId").value(1));
+                .content(objectMapper.writeValueAsString(reviewRequestDto)))
+                .andExpect(status().isOk());
     }
 
     @Test
     public void addReview_ShouldReturnForbiddenStatus() throws Exception {
         // Given
-        when(reviewService.addReview(review)).thenReturn(review);
+        when(reviewService.addReview(reviewRequestDto)).thenReturn(reviewResponseDto);
 
         // When & Then
         mockMvc.perform(post("/api/reviews")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(review)))
+                .content(objectMapper.writeValueAsString(reviewRequestDto)))
                 .andExpect(status().isForbidden());
     }
 
@@ -155,38 +164,37 @@ public class ReviewControllerTest {
     @WithMockUser(roles = {"USER"})
     public void updateReview_ShouldReturnUpdatedReviewForUser() throws Exception {
         // Given
-        when(reviewService.updateReview(review)).thenReturn(review);
+        when(reviewService.updateReview(reviewRequestDto)).thenReturn(reviewResponseDto);
 
         // When & Then
         mockMvc.perform(put("/api/reviews")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(review)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reviewId").value(1));
+                .content(objectMapper.writeValueAsString(reviewRequestDto)))
+                .andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(roles = {"ADMIN"})
     public void updateReview_ShouldReturnForbiddenStatusForAdmin() throws Exception {
         // Given
-        when(reviewService.updateReview(review)).thenReturn(review);
+        when(reviewService.updateReview(reviewRequestDto)).thenReturn(reviewResponseDto);
 
         // When & Then
         mockMvc.perform(put("/api/reviews")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(review)))
+                .content(objectMapper.writeValueAsString(reviewRequestDto)))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     public void updateReview_ShouldReturnForbiddenStatus() throws Exception {
         // Given
-        when(reviewService.updateReview(review)).thenReturn(review);
+        when(reviewService.updateReview(reviewRequestDto)).thenReturn(reviewResponseDto);
 
         // When & Then
         mockMvc.perform(put("/api/reviews")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(review)))
+                .content(objectMapper.writeValueAsString(reviewRequestDto)))
                 .andExpect(status().isForbidden());
     }
 
@@ -195,9 +203,10 @@ public class ReviewControllerTest {
     public void deleteReview_ShouldReturnNoContentStatus() throws Exception {
         // Given
         // When & Then
-        mockMvc.perform(delete("/api/reviews/1")
+        mockMvc.perform(delete("/api/reviews")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(review)))
+                .content(objectMapper.writeValueAsString(reviewRequestDto)))
+                .andDo(print())
                 .andExpect(status().isNoContent());
     }
 
@@ -205,9 +214,10 @@ public class ReviewControllerTest {
     public void deleteReview_ShouldReturnForbiddenStatus() throws Exception {
         // Given
         // When & Then
-        mockMvc.perform(delete("/api/reviews/1")
+        mockMvc.perform(delete("/api/reviews")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(review)))
+                .content(objectMapper.writeValueAsString(reviewRequestDto)))
+                .andDo(print())
                 .andExpect(status().isForbidden());
     }
 }

@@ -51,7 +51,6 @@ public class BookServiceTest {
     @BeforeEach
     void setUp() {
         bookRequestDto = BookRequestDto.builder()
-                .id(1L)
                 .title("Title")
                 .isbn("ISBN")
                 .build();
@@ -103,29 +102,27 @@ public class BookServiceTest {
     @Test
     void getBookById_ShouldReturnBook_WhenBookExists() {
         // Given
-        Long bookId = book.getBookId();
-        when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+        when(bookRepository.findByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
         when(bookMapper.toResponseDto(book)).thenReturn(bookResponseDto);
 
         // When
-        BookResponseDto result = bookService.getBookById(bookId);
+        BookResponseDto result = bookService.getBookById(bookRequestDto);
 
         // Then
         assertNotNull(result);
-        assertEquals(bookId, result.getId());
+        assertEquals(book.getBookId(), result.getId());
         assertEquals("Title", result.getTitle());
-        verify(bookRepository, times(1)).findById(bookId);
+        verify(bookRepository, times(1)).findByIsbn(book.getIsbn());
     }
 
     @Test
     void getBookById_ShouldThrowResourceNotFoundException_WhenBookNotFound() {
         // Given
-        Long bookId = book.getBookId();
-        when(bookRepository.findById(bookId)).thenThrow(new ResourceNotFoundException("Book not found"));
+        when(bookRepository.findByIsbn(book.getIsbn())).thenThrow(new ResourceNotFoundException("Book not found"));
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> bookService.getBookById(bookId));
-        verify(bookRepository, times(1)).findById(bookId);
+        assertThrows(ResourceNotFoundException.class, () -> bookService.getBookById(bookRequestDto));
+        verify(bookRepository, times(1)).findByIsbn(book.getIsbn());
 
     }
 
@@ -162,66 +159,61 @@ public class BookServiceTest {
     @Test
     void updateBook_ShouldThrowResourceNotFoundException_WhenBookNotFound() {
         // Given
-        Long bookId = 1L;
-        BookRequestDto mockBookDto = BookRequestDto.builder()
-                .id(bookId)
-                .build();
-        when(bookRepository.findById(mockBookDto.getId())).thenThrow(new ResourceNotFoundException("Book not found"));
+        when(bookRepository.findByIsbn(book.getIsbn())).thenThrow(new ResourceNotFoundException("Book not found"));
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> bookService.updateBook(bookId ,mockBookDto));
-        verify(bookRepository, times(1)).findById(bookId);
+        assertThrows(ResourceNotFoundException.class, () -> bookService.updateBook(bookRequestDto));
+        verify(bookRepository, times(1)).findByIsbn(book.getIsbn());
     }
 
     @Test
     void updateBook_ShouldReturnUpdatedBook_WhenBookExist() {
         // Given
-        Long bookId = book.getBookId();
-        when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
-        when(bookRepository.save(any(Book.class))).thenReturn(book);
-        when(bookMapper.toResponseDto(book)).thenReturn(bookResponseDto);
+        when(bookRepository.findByIsbn(book.getIsbn())).thenReturn(Optional.of(book));
         when(authorMapper.toEntities(bookRequestDto.getAuthors())).thenReturn(Collections.emptySet());
         when(categoryMapper.toEntities(bookRequestDto.getCategories())).thenReturn(Collections.emptySet());
         when(publisherMapper.toEntity(bookRequestDto.getPublisher())).thenReturn(null);
+        when(bookRepository.save(book)).thenReturn(book);
+        when(bookMapper.toResponseDto(book)).thenReturn(bookResponseDto);
 
         // When
-        BookResponseDto updatedBook = bookService.updateBook(bookId, bookRequestDto);
+        BookResponseDto updatedBook = bookService.updateBook(bookRequestDto);
 
         // Then
         assertEquals(bookResponseDto.getTitle(), updatedBook.getTitle());
         assertEquals(bookResponseDto.getDescription(), updatedBook.getDescription());
         assertEquals(bookResponseDto.getId(), updatedBook.getId());
-        verify(bookRepository, times(1)).findById(bookId);
+        verify(bookRepository, times(1)).findByIsbn(book.getIsbn());
         verify(bookRepository, times(1)).save(book);
     }
 
     @Test
     void deleteBook_shouldDeleteBook_WhenBookExists(){
         // Given
-        Long bookId = 1L;
-        when(bookRepository.existsById(bookId)).thenReturn(true);
+        String isbn = "ISBN";
+        when(bookRepository.existsByIsbn(bookRequestDto.getIsbn())).thenReturn(true);
 
         // When
-        bookService.deleteBook(bookId);
+        bookService.deleteBook(bookRequestDto);
 
         // Then
-        verify(bookRepository, times(1)).existsById(bookId);
-        verify(bookRepository, times(1)).deleteById(bookId);
+        verify(bookRepository, times(1)).existsByIsbn(isbn);
+        verify(bookRepository, times(1)).deleteByIsbn(isbn);
     }
 
     @Test
     void deleteBook_ShouldThrowException_WhenBookDoesNotExist() {
         // Given
-        Long bookId = 1L;
-        when(bookRepository.existsById(bookId)).thenReturn(false);
+        String isbn = "ISBN";
+        when(bookRepository.existsByIsbn(isbn)).thenReturn(false);
 
         // When
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> bookService.deleteBook(bookId));
-        assertEquals("Book with ID " + bookId + " not found", exception.getMessage());
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> bookService.deleteBook(bookRequestDto));
+        assertEquals("Book with ISBN " + isbn + " not found", exception.getMessage());
 
         // Then
-        verify(bookRepository, times(1)).existsById(bookId);
-        verify(bookRepository, never()).deleteById(bookId);
+        verify(bookRepository, times(1)).existsByIsbn(isbn);
+        verify(bookRepository, never()).deleteByIsbn(isbn);
     }
 
 }
