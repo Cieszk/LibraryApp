@@ -13,9 +13,5 @@ class LibraryAppApplicationTests {
     @MockBean
     private JwtService jwtService;
 
-    @Test
-    void contextLoads() {
-
-    }
 
 }

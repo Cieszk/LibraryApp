@@ -1,6 +1,7 @@
 package pl.cieszk.libraryapp.features.publishers.application;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import pl.cieszk.libraryapp.core.exceptions.custom.PublisherNotFoundException;
 import pl.cieszk.libraryapp.features.publishers.application.dto.PublisherRequestDto;
@@ -13,10 +14,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class PublisherService {
     private final PublisherRepository publisherRepository;
     private final PublisherMapper publisherMapper;
+
+    public PublisherService(PublisherRepository publisherRepository, @Lazy PublisherMapper publisherMapper) {
+        this.publisherRepository = publisherRepository;
+        this.publisherMapper = publisherMapper;
+    }
 
     public PublisherResponseDto getPublisherById(PublisherRequestDto publisherRequestDto) {
         Publisher publisher =  publisherRepository.findByName(publisherRequestDto.getName())

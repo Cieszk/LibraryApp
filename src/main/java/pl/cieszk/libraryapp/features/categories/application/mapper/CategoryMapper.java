@@ -1,5 +1,6 @@
 package pl.cieszk.libraryapp.features.categories.application.mapper;
 
+import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Named;
 import pl.cieszk.libraryapp.features.books.application.mapper.BookMapper;
@@ -12,7 +13,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", uses = {BookMapper.class})
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface CategoryMapper {
     Category toEntity(CategoryResponseDto categoryResponseDto);
     Category toEntity(CategoryRequestDto categoryRequestDto);

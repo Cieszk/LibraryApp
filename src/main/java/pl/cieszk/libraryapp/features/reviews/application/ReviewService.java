@@ -2,6 +2,7 @@ package pl.cieszk.libraryapp.features.reviews.application;
 
 import lombok.AllArgsConstructor;
 import org.mapstruct.control.MappingControl;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import pl.cieszk.libraryapp.core.exceptions.custom.ReviewNotFoundException;
 import pl.cieszk.libraryapp.core.exceptions.custom.UnauthorizedAccessException;
@@ -22,11 +23,16 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
-@AllArgsConstructor
 public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserService userService;
     private final ReviewMapper reviewMapper;
+
+    public ReviewService(ReviewRepository reviewRepository, UserService userService, @Lazy ReviewMapper reviewMapper) {
+        this.reviewRepository = reviewRepository;
+        this.userService = userService;
+        this.reviewMapper = reviewMapper;
+    }
 
     public ReviewResponseDto getReviewById(ReviewRequestDto reviewRequestDto) {
         User user = reviewRequestDto.getBookUserRequest().toUser();

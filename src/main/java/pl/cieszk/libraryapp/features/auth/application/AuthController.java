@@ -1,5 +1,8 @@
 package pl.cieszk.libraryapp.features.auth.application;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,13 +19,15 @@ public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     public AuthController(AuthService authService, JwtService jwtService) {
         this.authService = authService;
         this.jwtService = jwtService;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody RegisterUserDto registerUserDto) {
+    public ResponseEntity<?> register(@RequestBody RegisterUserDto registerUserDto) {
         User registeredUser = authService.signUp(registerUserDto);
         return ResponseEntity.ok(registeredUser);
     }

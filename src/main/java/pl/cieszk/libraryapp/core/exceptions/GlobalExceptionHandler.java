@@ -2,6 +2,7 @@ package pl.cieszk.libraryapp.core.exceptions;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -13,10 +14,13 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.ModelAndView;
 import pl.cieszk.libraryapp.core.exceptions.custom.*;
+import org.slf4j.LoggerFactory;
 
 @ControllerAdvice
 @Component
 public class GlobalExceptionHandler implements HandlerExceptionResolver {
+
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResourceAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -98,9 +102,14 @@ public class GlobalExceptionHandler implements HandlerExceptionResolver {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setHeader("Error", ex.getMessage());
             return new ModelAndView();
+        } else if (ex instanceof AuthorNotFoundException) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.setHeader("Error", ex.getMessage());
+            return new ModelAndView();
         }
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         response.setHeader("Error", ex.getMessage());
+        logger.error(ex.getMessage());
         return new ModelAndView();
     }
 }

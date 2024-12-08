@@ -1,5 +1,7 @@
 package pl.cieszk.libraryapp.features.auth.application;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -7,6 +9,7 @@ import pl.cieszk.libraryapp.core.exceptions.custom.AuthenticationFailedException
 import pl.cieszk.libraryapp.features.auth.application.dto.LoginUserDto;
 import pl.cieszk.libraryapp.features.auth.application.dto.RegisterUserDto;
 import pl.cieszk.libraryapp.features.auth.domain.User;
+import pl.cieszk.libraryapp.features.auth.domain.enums.UserRole;
 import pl.cieszk.libraryapp.features.auth.repository.UserRepository;
 
 @Service
@@ -26,6 +29,7 @@ public class AuthService {
                 .username(registerUserDto.getUsername())
                 .email(registerUserDto.getEmail())
                 .password(passwordEncoder.encode(registerUserDto.getPassword()))
+                .role(UserRole.USER)
                 .build();
         return userRepository.save(user);
     }

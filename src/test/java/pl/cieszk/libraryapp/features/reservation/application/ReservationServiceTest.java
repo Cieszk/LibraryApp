@@ -186,7 +186,7 @@ public class ReservationServiceTest {
         reservationService.deleteReservation(bookUserRequest);
 
         // Then
-        verify(reservationRepository, times(1)).deleteByUserAAndAndBookInstance_Book(user, book);
+        verify(reservationRepository, times(1)).deleteByUserAndBookInstance_Book(user, book);
     }
 
     @Test

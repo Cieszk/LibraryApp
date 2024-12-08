@@ -1,6 +1,7 @@
 package pl.cieszk.libraryapp.features.reservations.application;
 
 import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
 import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
@@ -21,13 +22,19 @@ import pl.cieszk.libraryapp.shared.dto.BookUserRequest;
 import java.util.Optional;
 
 @Service
-@AllArgsConstructor
 public class ReservationService {
 
     private ReservationRepository reservationRepository;
     private BookInstanceService bookInstanceService;
     private ReservationMapper reservationMapper;
     private BookInstanceMapper bookInstanceMapper;
+
+    public ReservationService(ReservationRepository reservationRepository, BookInstanceService bookInstanceService, @Lazy ReservationMapper reservationMapper, @Lazy BookInstanceMapper bookInstanceMapper) {
+        this.reservationRepository = reservationRepository;
+        this.bookInstanceService = bookInstanceService;
+        this.reservationMapper = reservationMapper;
+        this.bookInstanceMapper = bookInstanceMapper;
+    }
 
     private final int MAX_RESERVATIONS = 3;
 
@@ -58,7 +65,7 @@ public class ReservationService {
         User user = bookUserRequest.toUser();
         Book book = bookUserRequest.toBook();
         if (reservationRepository.existsByUserAndBookInstance_Book(user, book)) {
-            reservationRepository.deleteByUserAAndAndBookInstance_Book(user, book);
+            reservationRepository.deleteByUserAndBookInstance_Book(user, book);
             return;
         }
         throw new NoReservationFoundException("No reservation found with given ID");

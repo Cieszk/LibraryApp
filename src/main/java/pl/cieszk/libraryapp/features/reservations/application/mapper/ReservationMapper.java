@@ -1,5 +1,6 @@
 package pl.cieszk.libraryapp.features.reservations.application.mapper;
 
+import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import pl.cieszk.libraryapp.features.auth.application.mapper.UserMapper;
 import pl.cieszk.libraryapp.features.books.application.mapper.BookInstanceMapper;
@@ -7,7 +8,7 @@ import pl.cieszk.libraryapp.features.reservations.application.dto.ReservationReq
 import pl.cieszk.libraryapp.features.reservations.application.dto.ReservationResponseDto;
 import pl.cieszk.libraryapp.features.reservations.domain.Reservation;
 
-@Mapper(componentModel = "spring", uses = {UserMapper.class, BookInstanceMapper.class})
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface ReservationMapper {
 
     Reservation toEntity(ReservationRequestDto reservationRequestDto);

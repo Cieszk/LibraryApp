@@ -1,5 +1,9 @@
 package pl.cieszk.libraryapp.core.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,11 +13,21 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import pl.cieszk.libraryapp.features.auth.domain.User;
+import pl.cieszk.libraryapp.features.auth.domain.enums.UserRole;
 import pl.cieszk.libraryapp.features.auth.repository.UserRepository;
 
 @Configuration
 public class ApplicationConfiguration {
     private final UserRepository userRepository;
+    private final Logger logger = LoggerFactory.getLogger(ApplicationConfiguration.class);
+
+    @Value("${security.admin.username}")
+    private String username;
+    @Value("${security.admin.password}")
+    private String password;
+    @Value("${security.admin.email}")
+    private String email;
 
     public ApplicationConfiguration(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -45,4 +59,22 @@ public class ApplicationConfiguration {
         return authProvider;
     }
 
+    @Bean
+    CommandLineRunner initAdminUser() {
+        return args -> {
+            if (userRepository.findByEmail(email).isEmpty()) {
+                User admin = User.builder()
+                        .email(email)
+                        .username(username)
+                        .password(password)
+                        .role(UserRole.ADMIN)
+                        .build();
+
+                userRepository.save(admin);
+                logger.debug("Admin user created successfully!");
+            } else {
+                logger.debug("Admin user already exists.");
+            }
+        };
+    }
 }

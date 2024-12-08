@@ -1,6 +1,7 @@
 package pl.cieszk.libraryapp.features.books.application;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import pl.cieszk.libraryapp.core.exceptions.custom.ResourceAlreadyExistsException;
 import pl.cieszk.libraryapp.core.exceptions.custom.ResourceNotFoundException;
@@ -17,13 +18,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class BookService {
     private final BookRepository bookRepository;
     private final BookMapper bookMapper;
     private final AuthorMapper authorMapper;
     private final CategoryMapper categoryMapper;
     private final PublisherMapper publisherMapper;
+
+    public BookService(BookRepository bookRepository, @Lazy BookMapper bookMapper, @Lazy AuthorMapper authorMapper, @Lazy CategoryMapper categoryMapper, @Lazy PublisherMapper publisherMapper) {
+        this.bookRepository = bookRepository;
+        this.bookMapper = bookMapper;
+        this.authorMapper = authorMapper;
+        this.categoryMapper = categoryMapper;
+        this.publisherMapper = publisherMapper;
+    }
 
     public List<BookResponseDto> getAllBooks() {
         return bookRepository.findAll().stream()

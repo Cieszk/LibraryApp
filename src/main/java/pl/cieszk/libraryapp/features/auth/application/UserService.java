@@ -1,6 +1,7 @@
 package pl.cieszk.libraryapp.features.auth.application;
 
 import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,10 +14,14 @@ import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.auth.repository.UserRepository;
 
 @Service
-@AllArgsConstructor
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private UserMapper userMapper;
+
+    public UserService(UserRepository userRepository, @Lazy UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

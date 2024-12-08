@@ -14,7 +14,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     boolean existsByUserAndBookInstance_Book(User user, Book book);
 
-    void deleteByUserAAndAndBookInstance_Book(User user, Book book);
+    void deleteByUserAndBookInstance_Book(User user, Book book);
     Long countByUser_UserId(Long userId);
 
     Long countByUser_Email(String email);

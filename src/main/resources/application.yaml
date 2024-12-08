@@ -17,10 +17,16 @@ spring:
     scheduler-name: FineScheduler
 security:
   jwt:
-    secret-key: ${JWT_SECRET}
+    secret-key: 2e1928b965bce4fbabcdd70b1dc146f965e22adf79c8b8f7c1d162d7067cfd60c5e74a245dcf9ab3b58656ea66c9fb23527fd0482ba585bc845f2db6f6ebc4f99c86a626ce302cbb3977e3e0bc786cf12931a76545fbfd2b7d581677a2cd6450cec9770286a67e6d559c64628c24f4453676a52e0a0a5bb1a4f6379d8f79a922a6e02e3602d1e4219f2ba5f134d751a258f5f8f327e94dcd29a7f40910e76944668338e1030a278dade12944257cbfbd4433fb5205c34a0b493625faf4194da50cbaccbd82d3cf28d28baa1119db5058ebd45ea426c1e408cacbccafc8299247d3d8ce8c26cdd623b4044b913fbfb2a6c97dee7b6a3945d8695ad8f44a264a92
     expiration-time: 3600000
-
+  admin:
+    username: cieszkens
+    password: AdminPassword123!
+    email: kamil.cieszkowski96@gmail.com
 logging:
   level:
-    org:
-      springframework: DEBUG
+    org.springframework: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.transaction: TRACE
+    org.hibernate: DEBUG
+    root: debug

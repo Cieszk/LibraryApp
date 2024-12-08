@@ -1,6 +1,8 @@
 package pl.cieszk.libraryapp.features.authors.application.mapper;
 
+import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import pl.cieszk.libraryapp.features.authors.application.dto.AuthorRequestDto;
 import pl.cieszk.libraryapp.features.authors.application.dto.AuthorResponseDto;
@@ -9,10 +11,11 @@ import pl.cieszk.libraryapp.features.books.application.mapper.BookMapper;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", uses = {BookMapper.class})
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface AuthorMapper {
 
     AuthorResponseDto toResponseDto(Author author);
@@ -27,4 +30,8 @@ public interface AuthorMapper {
                 .map(Book::getBookId)
                 .collect(Collectors.toSet()) : Collections.emptySet();
     }
+
+    List<AuthorResponseDto> toResponseDtos(List<Author> author);
+
+    void updateEntityFromDto(AuthorRequestDto authorRequestDto, @MappingTarget Author author);
 }

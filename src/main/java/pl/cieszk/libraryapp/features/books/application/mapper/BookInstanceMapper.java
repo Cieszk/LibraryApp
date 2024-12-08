@@ -1,6 +1,7 @@
 package pl.cieszk.libraryapp.features.books.application.mapper;
 
 import org.mapstruct.Context;
+import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceRequestDto;
@@ -15,7 +16,7 @@ import pl.cieszk.libraryapp.features.reservations.application.mapper.Reservation
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", uses = {BookMapper.class, ReservationMapper.class, BookLoanMapper.class})
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface BookInstanceMapper {
     BookInstance toEntity(BookInstanceRequestDto bookInstanceRequestDto);
     BookInstance toEntity(BookInstanceResponseDto bookInstanceResponseDto);

@@ -1,6 +1,7 @@
 package pl.cieszk.libraryapp.features.loans.application;
 
 import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
 import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
@@ -28,13 +29,20 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
 public class BookLoanService {
     private BookLoanRepository bookLoanRepository;
     private BookInstanceService bookInstanceService;
     private ReservationService reservationService;
     private BookLoanMapper bookLoanMapper;
     private BookInstanceMapper bookInstanceMapper;
+
+    public BookLoanService(BookLoanRepository bookLoanRepository, BookInstanceService bookInstanceService, ReservationService reservationService, @Lazy BookLoanMapper bookLoanMapper,@Lazy BookInstanceMapper bookInstanceMapper) {
+        this.bookLoanRepository = bookLoanRepository;
+        this.bookInstanceService = bookInstanceService;
+        this.reservationService = reservationService;
+        this.bookLoanMapper = bookLoanMapper;
+        this.bookInstanceMapper = bookInstanceMapper;
+    }
 
     private final int MAX_LOANS = 5;
 
