@@ -16,7 +16,7 @@ import java.util.Set;
 public class CategoryController {
     private CategoryService categoryService;
 
-    @GetMapping
+    @GetMapping("/all")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Set<CategoryResponseDto>> getAllCategories() {
         return ResponseEntity.ok(categoryService.getAllCategories());
