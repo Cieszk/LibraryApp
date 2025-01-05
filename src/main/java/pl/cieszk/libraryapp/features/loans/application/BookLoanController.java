@@ -8,6 +8,7 @@ import pl.cieszk.libraryapp.core.exceptions.custom.BookNotAvailableException;
 import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
 import pl.cieszk.libraryapp.features.auth.application.dto.UserRequestDto;
 import pl.cieszk.libraryapp.features.auth.domain.User;
+import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceFineDto;
 import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceResponseDto;
 import pl.cieszk.libraryapp.features.books.application.dto.BookResponseDto;
 import pl.cieszk.libraryapp.features.books.domain.Book;
@@ -56,9 +57,8 @@ public class BookLoanController {
     }
 
     @GetMapping("/fines")
-    public ResponseEntity<Map<BookResponseDto, Double>> getUserFines(@RequestBody UserRequestDto userRequestDto) {
-        Map<BookInstanceResponseDto, Double> userFines = bookLoanService.getUserFines(userRequestDto);
-        return ResponseEntity.ok(userFines.entrySet().stream()
-                .collect(Collectors.toMap(e -> e.getKey().getBook(), Map.Entry::getValue)));
+    public ResponseEntity<List<BookInstanceFineDto>> getUserFines(@RequestBody UserRequestDto userRequestDto) {
+        List<BookInstanceFineDto> userFines = bookLoanService.getUserFines(userRequestDto);
+        return ResponseEntity.ok(userFines);
     }
 }

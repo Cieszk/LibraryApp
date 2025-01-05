@@ -23,6 +23,7 @@ import pl.cieszk.libraryapp.features.auth.application.dto.UserRequestDto;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.auth.domain.enums.UserRole;
 import pl.cieszk.libraryapp.features.books.application.BookService;
+import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceFineDto;
 import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceResponseDto;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
@@ -31,15 +32,11 @@ import pl.cieszk.libraryapp.features.loans.domain.BookLoan;
 import pl.cieszk.libraryapp.shared.dto.BookUserRequest;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -97,6 +94,8 @@ public class BookLoanControllerTest {
     private BookUserRequest bookUserRequest;
     private BookInstanceResponseDto bookInstanceResponseDto;
 
+    private BookInstanceFineDto bookInstanceFineDto;
+
     @BeforeEach
     void setUp() {
         user = User.builder()
@@ -126,6 +125,8 @@ public class BookLoanControllerTest {
 
         bookUserRequest = BookUserRequest.builder()
                 .build();
+
+        bookInstanceFineDto = mock(BookInstanceFineDto.class);
 
         // Mock the JwtService to return a valid token
         token = "Bearer valid-jwt-token";
@@ -283,8 +284,7 @@ public class BookLoanControllerTest {
     @WithMockUser(roles = {"USER", "ADMIN"})
     void getUserFines_ShouldReturnUserFinesWithUserRole() throws Exception {
         // Given
-        Map<BookInstanceResponseDto, Double> userFines = new HashMap<>();
-        userFines.put(bookInstanceResponseDto, 0.0);
+        List<BookInstanceFineDto> userFines = List.of(bookInstanceFineDto);
         when(bookLoanService.getUserFines(userRequestDto)).thenReturn(userFines);
 
         // When & Then

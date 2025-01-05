@@ -8,7 +8,9 @@ import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
 import pl.cieszk.libraryapp.features.auth.application.dto.UserRequestDto;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.books.application.BookInstanceService;
+import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceFineDto;
 import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceResponseDto;
+import pl.cieszk.libraryapp.features.books.application.mapper.BookInstanceFineMapper;
 import pl.cieszk.libraryapp.features.books.application.mapper.BookInstanceMapper;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
@@ -35,13 +37,15 @@ public class BookLoanService {
     private ReservationService reservationService;
     private BookLoanMapper bookLoanMapper;
     private BookInstanceMapper bookInstanceMapper;
+    private BookInstanceFineMapper bookInstanceFineMapper;
 
-    public BookLoanService(BookLoanRepository bookLoanRepository, BookInstanceService bookInstanceService, ReservationService reservationService, @Lazy BookLoanMapper bookLoanMapper,@Lazy BookInstanceMapper bookInstanceMapper) {
+    public BookLoanService(BookLoanRepository bookLoanRepository, BookInstanceService bookInstanceService, ReservationService reservationService, @Lazy BookLoanMapper bookLoanMapper,@Lazy BookInstanceMapper bookInstanceMapper, @Lazy BookInstanceFineMapper bookInstanceFineMapper) {
         this.bookLoanRepository = bookLoanRepository;
         this.bookInstanceService = bookInstanceService;
         this.reservationService = reservationService;
         this.bookLoanMapper = bookLoanMapper;
         this.bookInstanceMapper = bookInstanceMapper;
+        this.bookInstanceFineMapper = bookInstanceFineMapper;
     }
 
     private final int MAX_LOANS = 5;
@@ -109,12 +113,15 @@ public class BookLoanService {
         return bookLoanMapper.toResponseDtos(bookLoanRepository.findByUser_EmailAndReturnDateIsNotNull(user.getEmail()));
     }
 
-    public Map<BookInstanceResponseDto, Double> getUserFines(UserRequestDto user) {
+    public List<BookInstanceFineDto> getUserFines(UserRequestDto user) {
         return bookLoanRepository.findByUser_Email(user.getEmail()).stream()
                 .filter(bookLoan -> bookLoan.getFineAmount() > 0)
-                .collect(Collectors.groupingBy(bookLoan ->
-                    bookInstanceMapper.toResponseDto(bookLoan.getBookInstance()),
-                    Collectors.summingDouble(BookLoan::getFineAmount)
-                ));
+                .collect(Collectors.groupingBy(
+                        BookLoan::getBookInstance,
+                        Collectors.summingDouble(BookLoan::getFineAmount)
+                ))
+                .entrySet().stream()
+                .map(entry -> bookInstanceFineMapper.toDto(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
     }
 }

@@ -11,7 +11,9 @@ import pl.cieszk.libraryapp.core.exceptions.custom.NoReservationFoundException;
 import pl.cieszk.libraryapp.features.auth.application.dto.UserRequestDto;
 import pl.cieszk.libraryapp.features.auth.domain.User;
 import pl.cieszk.libraryapp.features.books.application.BookInstanceService;
+import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceFineDto;
 import pl.cieszk.libraryapp.features.books.application.dto.BookInstanceResponseDto;
+import pl.cieszk.libraryapp.features.books.application.mapper.BookInstanceFineMapper;
 import pl.cieszk.libraryapp.features.books.application.mapper.BookInstanceMapper;
 import pl.cieszk.libraryapp.features.books.domain.Book;
 import pl.cieszk.libraryapp.features.books.domain.BookInstance;
@@ -49,6 +51,9 @@ public class BookLoanServiceTest {
     @Mock
     private BookInstanceMapper bookInstanceMapper;
 
+    @Mock
+    private BookInstanceFineMapper bookInstanceFineMapper;
+
     @InjectMocks
     private BookLoanService bookLoanService;
 
@@ -61,6 +66,7 @@ public class BookLoanServiceTest {
     private ReservationResponseDto reservationResponseDto;
     private BookLoanResponseDto bookLoanResponseDto;
     private UserRequestDto userRequestDto;
+    private BookInstanceFineDto bookInstanceFineDto;
 
     @BeforeEach
     void setUp() {
@@ -80,6 +86,7 @@ public class BookLoanServiceTest {
         reservationResponseDto = mock(ReservationResponseDto.class);
         bookLoanResponseDto = mock(BookLoanResponseDto.class);
         userRequestDto = mock(UserRequestDto.class);
+        bookInstanceFineDto = mock(BookInstanceFineDto.class);
     }
 
     @Test
@@ -237,13 +244,11 @@ public class BookLoanServiceTest {
         bookLoan.setFineAmount(10.0);
         when(userRequestDto.getEmail()).thenReturn(user.getEmail());
         when(bookLoanRepository.findByUser_Email(user.getEmail())).thenReturn(Set.of(bookLoan));
-        when(bookInstanceMapper.toResponseDto(bookInstance)).thenReturn(bookInstanceResponseDto);
+        when(bookInstanceFineMapper.toDto(bookInstance, 10.0)).thenReturn(bookInstanceFineDto);
 
-        Map<BookInstanceResponseDto, Double> result = bookLoanService.getUserFines(userRequestDto);
+        List<BookInstanceFineDto> result = bookLoanService.getUserFines(userRequestDto);
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertTrue(result.containsKey(bookInstanceResponseDto));
-        assertEquals(10.0, result.get(bookInstanceResponseDto));
     }
 }
